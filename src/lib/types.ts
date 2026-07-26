@@ -56,3 +56,15 @@ export interface ExpenseOverride {
   override_date: string | null
   created_at: string
 }
+
+export interface Investment {
+  id: string
+  name: string
+  type: string | null
+  amount_invested: number
+  current_value: number | null
+  currency: Currency
+  invested_at: string // YYYY-MM-DD
+  notes: string | null
+  created_at: string
+}

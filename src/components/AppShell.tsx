@@ -4,8 +4,9 @@ import { PiggyLogo } from './PiggyLogo'
 import { InicioScreen } from './InicioScreen'
 import { IncomesScreen } from './IncomesScreen'
 import { ExpensesScreen } from './ExpensesScreen'
+import { InvestmentsScreen } from './InvestmentsScreen'
 
-type Tab = 'inicio' | 'ingresos' | 'gastos'
+type Tab = 'inicio' | 'ingresos' | 'gastos' | 'inversiones'
 
 export function AppShell() {
   const { signOut } = useAuth()
@@ -27,6 +28,7 @@ export function AppShell() {
         {tab === 'inicio' && <InicioScreen />}
         {tab === 'ingresos' && <IncomesScreen />}
         {tab === 'gastos' && <ExpensesScreen />}
+        {tab === 'inversiones' && <InvestmentsScreen />}
       </main>
 
       <nav className="bottom-nav">
@@ -53,6 +55,14 @@ export function AppShell() {
         >
           <span className="nav-ico">🧾</span>
           Gastos
+        </button>
+        <button
+          type="button"
+          className={tab === 'inversiones' ? 'nav-item nav-active' : 'nav-item'}
+          onClick={() => setTab('inversiones')}
+        >
+          <span className="nav-ico">📈</span>
+          Inversiones
         </button>
       </nav>
     </div>
