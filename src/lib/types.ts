@@ -68,3 +68,13 @@ export interface Investment {
   notes: string | null
   created_at: string
 }
+
+export interface SavingsGoal {
+  id: string
+  name: string
+  target_amount: number
+  current_amount: number
+  currency: Currency
+  target_date: string | null // YYYY-MM-DD
+  created_at: string
+}
