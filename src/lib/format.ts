@@ -112,3 +112,29 @@ export function isoDate(y: number, m: number, d: number): string {
 export function monthLte(ay: number, am: number, by: number, bm: number): boolean {
   return ay < by || (ay === by && am <= bm)
 }
+
+export const MESES_SHORT = [
+  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+]
+
+/** Monto compacto para gráficos: "$ 850 mil", "US$ 1,2 M". */
+export function formatCompact(amount: number, currency: Currency): string {
+  const symbol = currency === 'USD' ? 'US$' : '$'
+  const abs = Math.abs(amount)
+  let s: string
+  if (abs >= 1_000_000) {
+    s = (amount / 1_000_000).toLocaleString('es-AR', { maximumFractionDigits: 1 }) + ' M'
+  } else if (abs >= 1_000) {
+    s = (amount / 1_000).toLocaleString('es-AR', { maximumFractionDigits: 0 }) + ' mil'
+  } else {
+    s = amount.toLocaleString('es-AR', { maximumFractionDigits: 0 })
+  }
+  return `${symbol} ${s}`
+}
+
+/** Porcentaje con signo: "+4,2%", "-1,5%". */
+export function formatPct(n: number): string {
+  const sign = n > 0 ? '+' : ''
+  return `${sign}${n.toLocaleString('es-AR', { maximumFractionDigits: 1 })}%`
+}

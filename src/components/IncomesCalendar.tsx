@@ -7,12 +7,11 @@ import {
   formatMoney,
   isoDate,
   monthLabel,
-  monthLte,
   todayLocal,
   weekdayMondayFirst,
   ymd,
-  type Currency,
 } from '../lib/format'
+import { monthOccurrences, sumByCurrency, type Occurrence } from '../lib/incomes'
 import type { Income, IncomeOverride } from '../lib/types'
 import { IncomeForm, type IncomeFormValues } from './IncomeForm'
 
@@ -22,19 +21,8 @@ interface Props {
   reload: () => Promise<void>
 }
 
-interface Occurrence {
-  key: string
-  kind: 'one' | 'recur'
-  income: Income
-  day: number
-  description: string
-  amount: number
-  currency: Currency
-  category: string | null
-}
-
 type FormMode =
-  | { mode: 'add'; day: number }
+  | { mode: 'add' }
   | { mode: 'edit'; occ: Occurrence }
   | null
 
@@ -50,68 +38,10 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
   const [confirm, setConfirm] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
 
-  const overrideMap = useMemo(() => {
-    const map = new Map<string, IncomeOverride>()
-    for (const ov of overrides) map.set(`${ov.income_id}|${ov.period}`, ov)
-    return map
-  }, [overrides])
-
-  const occurrences = useMemo(() => {
-    const period = firstOfMonthISO(view.y, view.m)
-    const maxDay = daysInMonth(view.y, view.m)
-    const occ: Occurrence[] = []
-
-    for (const inc of incomes) {
-      const start = ymd(inc.income_date)
-
-      if (!inc.is_recurring) {
-        if (start.y === view.y && start.m === view.m) {
-          occ.push({
-            key: inc.id,
-            kind: 'one',
-            income: inc,
-            day: start.d,
-            description: inc.description,
-            amount: inc.amount,
-            currency: inc.currency,
-            category: inc.category,
-          })
-        }
-        continue
-      }
-
-      // Recurrente: aplica desde su mes de inicio en adelante
-      if (!monthLte(start.y, start.m, view.y, view.m)) continue
-      const ov = overrideMap.get(`${inc.id}|${period}`)
-      if (ov?.status === 'deleted') continue
-
-      let day = Math.min(start.d, maxDay)
-      let description = inc.description
-      let amount = inc.amount
-      let currency = inc.currency
-      let category = inc.category
-
-      if (ov?.status === 'edited') {
-        if (ov.override_date) day = Math.min(ymd(ov.override_date).d, maxDay)
-        description = ov.description ?? inc.description
-        amount = ov.amount ?? inc.amount
-        currency = ov.currency ?? inc.currency
-        category = ov.category
-      }
-
-      occ.push({
-        key: `${inc.id}|${period}`,
-        kind: 'recur',
-        income: inc,
-        day,
-        description,
-        amount,
-        currency,
-        category,
-      })
-    }
-    return occ
-  }, [incomes, overrideMap, view])
+  const occurrences = useMemo(
+    () => monthOccurrences(incomes, overrides, view.y, view.m),
+    [incomes, overrides, view],
+  )
 
   const byDay = useMemo(() => {
     const map = new Map<number, Occurrence[]>()
@@ -123,15 +53,13 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
     return map
   }, [occurrences])
 
-  const monthTotals = useMemo(() => {
-    let ars = 0
-    let usd = 0
-    for (const o of occurrences) {
-      if (o.currency === 'ARS') ars += o.amount
-      else usd += o.amount
-    }
-    return { ars, usd }
-  }, [occurrences])
+  const monthTotals = useMemo(
+    () => ({
+      ars: sumByCurrency(occurrences, 'ARS'),
+      usd: sumByCurrency(occurrences, 'USD'),
+    }),
+    [occurrences],
+  )
 
   function goMonth(delta: number) {
     const next = addMonths(view.y, view.m, delta)
@@ -140,8 +68,6 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
     setFormMode(null)
     setConfirm(null)
   }
-
-  // ---- Guardar / borrar ----
 
   async function handleSubmit(values: IncomeFormValues) {
     if (formMode?.mode === 'add') {
@@ -156,7 +82,6 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
           .eq('id', occ.income.id)
         if (error) throw error
       } else {
-        // Ingreso mensual: guardamos un "override" solo para este mes.
         const period = firstOfMonthISO(view.y, view.m)
         const { error } = await supabase.from('income_overrides').upsert(
           {
@@ -272,7 +197,6 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
         </div>
       </div>
 
-      {/* Detalle del día seleccionado */}
       {selectedDay && (
         <div className="day-detail">
           <div className="day-detail-head">
@@ -283,7 +207,7 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
               <button
                 type="button"
                 className="btn-link"
-                onClick={() => setFormMode({ mode: 'add', day: selectedDay })}
+                onClick={() => setFormMode({ mode: 'add' })}
               >
                 + Agregar en este día
               </button>

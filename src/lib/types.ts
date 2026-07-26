@@ -23,3 +23,10 @@ export interface IncomeOverride {
   override_date: string | null // YYYY-MM-DD (día dentro del mes, si cambió)
   created_at: string
 }
+
+export interface InflationRate {
+  id: string
+  period: string // YYYY-MM-01
+  rate: number // % mensual (ej: 4.2)
+  created_at: string
+}

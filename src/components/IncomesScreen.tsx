@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Income, IncomeOverride } from '../lib/types'
+import type { Income, IncomeOverride, InflationRate } from '../lib/types'
 import { IncomesList } from './IncomesList'
 import { IncomesCalendar } from './IncomesCalendar'
 import { IncomesAnalysis } from './IncomesAnalysis'
@@ -11,6 +11,7 @@ export function IncomesScreen() {
   const [subtab, setSubtab] = useState<SubTab>('lista')
   const [incomes, setIncomes] = useState<Income[]>([])
   const [overrides, setOverrides] = useState<IncomeOverride[]>([])
+  const [inflation, setInflation] = useState<InflationRate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -18,7 +19,7 @@ export function IncomesScreen() {
     setLoading(true)
     setError('')
     // .range(0, 999): Supabase corta en 1000 filas; paginamos cuando haga falta.
-    const [incRes, ovRes] = await Promise.all([
+    const [incRes, ovRes, inflRes] = await Promise.all([
       supabase
         .from('incomes')
         .select('*')
@@ -26,13 +27,15 @@ export function IncomesScreen() {
         .order('created_at', { ascending: false })
         .range(0, 999),
       supabase.from('income_overrides').select('*').range(0, 999),
+      supabase.from('inflation_rates').select('*').range(0, 999),
     ])
 
     if (incRes.error) setError(incRes.error.message)
     else setIncomes((incRes.data ?? []) as Income[])
 
-    // Si la tabla de overrides todavía no existe (falta correr el SQL), no rompemos.
+    // Si alguna tabla nueva todavía no existe (falta correr el SQL), no rompemos.
     setOverrides(ovRes.error ? [] : ((ovRes.data ?? []) as IncomeOverride[]))
+    setInflation(inflRes.error ? [] : ((inflRes.data ?? []) as InflationRate[]))
 
     setLoading(false)
   }, [])
@@ -73,7 +76,14 @@ export function IncomesScreen() {
       {subtab === 'calendario' && (
         <IncomesCalendar incomes={incomes} overrides={overrides} reload={reload} />
       )}
-      {subtab === 'analisis' && <IncomesAnalysis />}
+      {subtab === 'analisis' && (
+        <IncomesAnalysis
+          incomes={incomes}
+          overrides={overrides}
+          inflation={inflation}
+          reload={reload}
+        />
+      )}
     </div>
   )
 }
