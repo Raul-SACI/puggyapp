@@ -720,6 +720,35 @@ input:focus {
   flex: 1;
 }
 
+/* ---------- Dashboard ---------- */
+.dash-hello {
+  margin-bottom: 2px;
+}
+
+.dash-hello .welcome-title {
+  margin: 0 0 2px;
+}
+
+.fill-in {
+  background: var(--primary);
+}
+
+.fill-out {
+  background: #ef7a7a;
+}
+
+.goal-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.goal-mini:last-child {
+  border-bottom: none;
+}
+
 .item-date {
   font-size: 12px;
   color: var(--text-soft);

@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { PiggyLogo } from './PiggyLogo'
-import { InicioScreen } from './InicioScreen'
+import { DashboardScreen } from './DashboardScreen'
 import { IncomesScreen } from './IncomesScreen'
 import { ExpensesScreen } from './ExpensesScreen'
 import { InvestmentsScreen } from './InvestmentsScreen'
 import { GoalsScreen } from './GoalsScreen'
 
-type Tab = 'inicio' | 'ingresos' | 'gastos' | 'inversiones' | 'objetivos'
+type Tab = 'dashboard' | 'ingresos' | 'gastos' | 'inversiones' | 'objetivos'
 
 export function AppShell() {
   const { signOut } = useAuth()
-  const [tab, setTab] = useState<Tab>('inicio')
+  const [tab, setTab] = useState<Tab>('dashboard')
 
   return (
     <div className="app-shell">
@@ -26,7 +26,7 @@ export function AppShell() {
       </header>
 
       <main className="app-main">
-        {tab === 'inicio' && <InicioScreen />}
+        {tab === 'dashboard' && <DashboardScreen />}
         {tab === 'ingresos' && <IncomesScreen />}
         {tab === 'gastos' && <ExpensesScreen />}
         {tab === 'inversiones' && <InvestmentsScreen />}
@@ -36,11 +36,11 @@ export function AppShell() {
       <nav className="bottom-nav">
         <button
           type="button"
-          className={tab === 'inicio' ? 'nav-item nav-active' : 'nav-item'}
-          onClick={() => setTab('inicio')}
+          className={tab === 'dashboard' ? 'nav-item nav-active' : 'nav-item'}
+          onClick={() => setTab('dashboard')}
         >
-          <span className="nav-ico">🏠</span>
-          Inicio
+          <span className="nav-ico">📊</span>
+          Dashboard
         </button>
         <button
           type="button"
