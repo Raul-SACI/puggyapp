@@ -1,6 +1,6 @@
 import { useAuth } from './lib/AuthContext'
 import { AuthScreen } from './components/AuthScreen'
-import { Home } from './components/Home'
+import { AppShell } from './components/AppShell'
 
 export default function App() {
   const { session, loading } = useAuth()
@@ -13,5 +13,5 @@ export default function App() {
     )
   }
 
-  return session ? <Home /> : <AuthScreen />
+  return session ? <AppShell /> : <AuthScreen />
 }
