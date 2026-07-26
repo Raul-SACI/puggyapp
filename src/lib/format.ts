@@ -62,3 +62,53 @@ export function formatDateLocal(iso: string): string {
   if (!y || !m || !d) return iso
   return `${d} ${meses[m - 1]} ${y}`
 }
+
+/* ------------------- Ayudas para el Calendario (mes) ------------------- */
+
+export const MESES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+]
+
+/** "Agosto 2026" (m es 1-12). */
+export function monthLabel(y: number, m: number): string {
+  return `${MESES[m - 1]} ${y}`
+}
+
+/** Cantidad de días de un mes (m es 1-12). Usa fecha local, sin toISOString. */
+export function daysInMonth(y: number, m: number): number {
+  return new Date(y, m, 0).getDate()
+}
+
+/** Día de la semana del 1° del mes, con Lunes = 0 ... Domingo = 6. */
+export function weekdayMondayFirst(y: number, m: number): number {
+  const jsDay = new Date(y, m - 1, 1).getDay() // 0=Dom ... 6=Sáb
+  return (jsDay + 6) % 7
+}
+
+/** Suma (o resta) meses. Devuelve {y, m} con m en 1-12. */
+export function addMonths(y: number, m: number, delta: number): { y: number; m: number } {
+  const idx = y * 12 + (m - 1) + delta
+  return { y: Math.floor(idx / 12), m: (idx % 12) + 1 }
+}
+
+/** Primer día del mes en formato YYYY-MM-01. */
+export function firstOfMonthISO(y: number, m: number): string {
+  return `${y}-${String(m).padStart(2, '0')}-01`
+}
+
+/** Separa una fecha YYYY-MM-DD en {y, m, d}. */
+export function ymd(iso: string): { y: number; m: number; d: number } {
+  const [y, m, d] = iso.split('-').map(Number)
+  return { y, m, d }
+}
+
+/** Arma una fecha YYYY-MM-DD a partir de año, mes (1-12) y día. */
+export function isoDate(y: number, m: number, d: number): string {
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+}
+
+/** ¿(ay,am) es anterior o igual a (by,bm)? (meses 1-12) */
+export function monthLte(ay: number, am: number, by: number, bm: number): boolean {
+  return ay < by || (ay === by && am <= bm)
+}

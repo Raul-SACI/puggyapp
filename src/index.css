@@ -587,3 +587,147 @@ input:focus {
   font-size: 14px;
   color: var(--text);
 }
+
+/* ---------- Sub-pestañas (Lista / Calendario / Análisis) ---------- */
+.subtabs {
+  display: flex;
+  gap: 4px;
+  background: #eef2f4;
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.subtab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  padding: 9px 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+
+.subtab-on {
+  background: var(--card);
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Calendario ---------- */
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.cal-nav {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.cal-card {
+  padding: 12px;
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 6px;
+}
+
+.cal-wd {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-cell {
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.cal-empty {
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.cal-daynum {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cal-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.cal-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.cal-dot-recur {
+  background: #f59e0b;
+}
+
+.cal-sel {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.25);
+}
+
+.cal-today .cal-daynum {
+  color: var(--primary-dark);
+}
+
+.cal-today {
+  background: rgba(20, 184, 166, 0.08);
+}
+
+.day-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.day-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
