@@ -19,7 +19,18 @@ interface Income {
   created_at: string
 }
 
-const CATEGORIAS = ['Sueldo', 'Freelance', 'Alquiler', 'Rendimiento', 'Venta', 'Otro']
+const CATEGORIAS = [
+  'Sueldo',
+  'Dividendos ARG',
+  'Alquiler',
+  'Venta de Inmuebles',
+  'Venta de Rodados',
+  'Dividendos EEUU',
+  'Aguinaldo',
+  'Venta de Servicio',
+  'Rendimientos',
+  'Otro',
+]
 
 export function IncomesScreen() {
   const [incomes, setIncomes] = useState<Income[]>([])
