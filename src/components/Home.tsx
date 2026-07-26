@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
+import { PiggyLogo } from './PiggyLogo'
 
 type Status = 'cargando' | 'listo' | 'error'
 
@@ -56,7 +57,10 @@ export function Home() {
   return (
     <div className="home-wrap">
       <header className="topbar">
-        <span className="topbar-brand">🐶 Puggy</span>
+        <span className="topbar-brand">
+          <PiggyLogo size={28} />
+          Puggy
+        </span>
         <button type="button" className="btn-ghost" onClick={signOut}>
           Salir
         </button>

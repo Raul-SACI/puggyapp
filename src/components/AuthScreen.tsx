@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
+import { PiggyLogo } from './PiggyLogo'
 
 type Mode = 'login' | 'register'
 
@@ -40,7 +41,7 @@ export function AuthScreen() {
     <div className="auth-wrap">
       <div className="card auth-card">
         <div className="brand">
-          <span className="brand-logo" aria-hidden="true">🐶</span>
+          <PiggyLogo size={64} />
           <h1 className="brand-name">Puggy</h1>
           <p className="brand-tagline">Tu plata, clara de un vistazo.</p>
         </div>
