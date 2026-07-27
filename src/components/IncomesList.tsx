@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatDateLocal, formatMoney, type Currency } from '../lib/format'
 import type { Income } from '../lib/types'
 import { IncomeForm, MEDIOS_COBRO, type IncomeFormValues } from './IncomeForm'
 import { TagManager } from './TagManager'
-import { isVoiceSupported, startVoice } from '../lib/voice'
+import { isVoiceSupported, startVoice, type VoiceRec } from '../lib/voice'
 import { parseVoice, type ParsedVoice } from '../lib/voiceParse'
+import { VoiceListening } from './VoiceListening'
 
 interface Props {
   incomes: Income[]
@@ -44,6 +45,7 @@ export function IncomesList({
   const [voiceError, setVoiceError] = useState('')
   const [voice, setVoice] = useState<ParsedVoice | null>(null)
   const [transcript, setTranscript] = useState('')
+  const recRef = useRef<VoiceRec | null>(null)
 
   const { flow, initial } = useMemo(() => {
     const flow: Record<Currency, number> = { ARS: 0, USD: 0 }
@@ -72,7 +74,7 @@ export function IncomesList({
       return
     }
     setListening(true)
-    startVoice(
+    recRef.current = startVoice(
       (t) => {
         setTranscript(t)
         setVoice(parseVoice(t, { categorias, fuentes, metodos: MEDIOS_COBRO, fallback: 'Ingreso' }))
@@ -92,6 +94,12 @@ export function IncomesList({
       },
       () => setListening(false),
     )
+  }
+
+  function cancelVoice() {
+    recRef.current?.abort()
+    recRef.current = null
+    setListening(false)
   }
 
   async function handleSubmit(values: IncomeFormValues) {
@@ -123,6 +131,7 @@ export function IncomesList({
 
   return (
     <div className="screen">
+      {listening && <VoiceListening onCancel={cancelVoice} />}
       <div className="stat-row">
         <div className="card stat">
           <span className="stat-label">Ingresos en pesos</span>
