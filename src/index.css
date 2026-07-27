@@ -786,6 +786,45 @@ input:focus {
   background: rgba(100, 116, 139, 0.15);
 }
 
+.tag-source {
+  color: #0369a1;
+  background: rgba(2, 132, 199, 0.12);
+}
+
+/* ---------- Gestión de categorías / fuentes ---------- */
+.manage-link {
+  align-self: flex-start;
+}
+
+.manage-card {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.manage-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chip-manage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip-x {
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
 .item-date {
   font-size: 12px;
   color: var(--text-soft);

@@ -3,12 +3,16 @@ import { supabase } from '../lib/supabase'
 import { formatDateLocal, formatMoney } from '../lib/format'
 import type { MovItem } from '../lib/movements'
 import { ExpenseForm, type ExpenseFormValues } from './ExpenseForm'
+import { TagManager } from './TagManager'
 
 interface Props {
   items: MovItem[]
   loading: boolean
   error: string
   reload: () => Promise<void>
+  categorias: string[]
+  onAddCategoria: (name: string) => Promise<void>
+  onDeleteCategoria: (name: string) => Promise<void>
 }
 
 function toRow(v: ExpenseFormValues) {
@@ -23,9 +27,18 @@ function toRow(v: ExpenseFormValues) {
   }
 }
 
-export function ExpensesList({ items, loading, error, reload }: Props) {
+export function ExpensesList({
+  items,
+  loading,
+  error,
+  reload,
+  categorias,
+  onAddCategoria,
+  onDeleteCategoria,
+}: Props) {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<MovItem | null>(null)
+  const [showManage, setShowManage] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
 
@@ -76,23 +89,39 @@ export function ExpensesList({ items, loading, error, reload }: Props) {
       </div>
 
       {!showForm && (
-        <button
-          type="button"
-          className="btn-primary btn-red"
-          onClick={() => {
-            setEditing(null)
-            setShowForm(true)
-            setConfirmDelete(null)
-          }}
-        >
-          + Agregar gasto
-        </button>
+        <>
+          <button
+            type="button"
+            className="btn-primary btn-red"
+            onClick={() => {
+              setEditing(null)
+              setShowForm(true)
+              setConfirmDelete(null)
+            }}
+          >
+            + Agregar gasto
+          </button>
+          <button
+            type="button"
+            className="btn-link manage-link"
+            onClick={() => setShowManage((v) => !v)}
+          >
+            {showManage ? 'Cerrar gestión' : '⚙︎ Gestionar categorías'}
+          </button>
+        </>
+      )}
+
+      {showManage && !showForm && (
+        <div className="card manage-card">
+          <TagManager title="Categorías de gastos" items={categorias} onAdd={onAddCategoria} onDelete={onDeleteCategoria} />
+        </div>
       )}
 
       {showForm && (
         <ExpenseForm
           title={editing ? 'Editar gasto' : 'Nuevo gasto'}
           submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
+          categorias={categorias}
           initial={editing ?? undefined}
           onSubmit={handleSubmit}
           onCancel={() => {

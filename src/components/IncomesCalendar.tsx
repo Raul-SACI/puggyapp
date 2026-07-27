@@ -19,6 +19,8 @@ interface Props {
   incomes: Income[]
   overrides: IncomeOverride[]
   reload: () => Promise<void>
+  categorias: string[]
+  fuentes: string[]
 }
 
 type FormMode =
@@ -28,7 +30,7 @@ type FormMode =
 
 const DIAS = ['LU', 'MA', 'MI', 'JU', 'VI', 'SA', 'DO']
 
-export function IncomesCalendar({ incomes, overrides, reload }: Props) {
+export function IncomesCalendar({ incomes, overrides, reload, categorias, fuentes }: Props) {
   const hoy = ymd(todayLocal())
   const [view, setView] = useState({ y: hoy.y, m: hoy.m })
   const [selectedDay, setSelectedDay] = useState<number | null>(
@@ -92,6 +94,7 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
             amount: values.amount,
             currency: values.currency,
             category: values.category,
+            source: values.source,
             collection_method: values.collection_method,
             override_date: values.income_date,
           },
@@ -222,6 +225,8 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
               title="Nuevo ingreso"
               submitLabel="Guardar"
               showInitial={false}
+              categorias={categorias}
+              fuentes={fuentes}
               initial={{ income_date: isoDate(view.y, view.m, selectedDay) }}
               onSubmit={handleSubmit}
               onCancel={() => setFormMode(null)}
@@ -234,11 +239,14 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
               submitLabel="Guardar cambios"
               showRecurring={formMode.occ.kind === 'one'}
               showInitial={false}
+              categorias={categorias}
+              fuentes={fuentes}
               initial={{
                 description: formMode.occ.description,
                 amount: formMode.occ.amount,
                 currency: formMode.occ.currency,
                 category: formMode.occ.category,
+                source: formMode.occ.source,
                 collection_method: formMode.occ.collection_method,
                 is_recurring: formMode.occ.income.is_recurring,
                 income_date: isoDate(view.y, view.m, formMode.occ.day),
@@ -262,6 +270,7 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
                   </div>
                   <div className="item-meta">
                     {o.category && <span className="tag">{o.category}</span>}
+                    {o.source && <span className="tag tag-source">{o.source}</span>}
                     {o.collection_method && <span className="tag tag-pay">{o.collection_method}</span>}
                     {o.kind === 'recur' && <span className="tag tag-recur">Mensual</span>}
                   </div>

@@ -1,19 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { parseMoney, todayLocal, type Currency } from '../lib/format'
 
-export const GASTO_CATEGORIAS = [
-  'Alquiler',
-  'Servicios',
-  'Supermercado',
-  'Transporte',
-  'Salud',
-  'Educación',
-  'Ocio',
-  'Ropa',
-  'Impuestos',
-  'Otros',
-]
-
 export const MEDIOS_PAGO = [
   'Efectivo',
   'Tarjeta de crédito',
@@ -45,34 +32,35 @@ interface Initial {
 interface Props {
   title: string
   submitLabel: string
+  categorias: string[]
   initial?: Initial
   showRecurring?: boolean
   onSubmit: (values: ExpenseFormValues) => Promise<void>
   onCancel: () => void
 }
 
+function withInitial(list: string[], value?: string | null): string[] {
+  if (value && !list.includes(value)) return [value, ...list]
+  return list
+}
+
 export function ExpenseForm({
   title,
   submitLabel,
+  categorias,
   initial,
   showRecurring = true,
   onSubmit,
   onCancel,
 }: Props) {
-  const initCat = initial?.category ?? ''
-  const presetMatch = GASTO_CATEGORIAS.includes(initCat)
+  const cats = withInitial(categorias, initial?.category)
 
   const [description, setDescription] = useState(initial?.description ?? '')
   const [amount, setAmount] = useState(
     initial?.amount != null ? String(initial.amount).replace('.', ',') : '',
   )
   const [currency, setCurrency] = useState<Currency>(initial?.currency ?? 'ARS')
-  const [category, setCategory] = useState<string>(
-    initCat ? (presetMatch ? initCat : 'Otros') : '',
-  )
-  const [customCategory, setCustomCategory] = useState(
-    initCat && !presetMatch ? initCat : '',
-  )
+  const [category, setCategory] = useState<string>(initial?.category ?? '')
   const [payment, setPayment] = useState<string>(initial?.payment_method ?? '')
   const [isRecurring, setIsRecurring] = useState(initial?.is_recurring ?? false)
   const [date, setDate] = useState(initial?.date ?? todayLocal())
@@ -93,7 +81,6 @@ export function ExpenseForm({
       setError('El monto tiene que ser un número mayor a cero.')
       return
     }
-    const cat = category === 'Otros' ? customCategory.trim() || 'Otros' : category || null
 
     setSaving(true)
     try {
@@ -101,7 +88,7 @@ export function ExpenseForm({
         description: desc,
         amount: monto,
         currency,
-        category: cat,
+        category: category || null,
         payment_method: payment || null,
         is_recurring: isRecurring,
         date,
@@ -159,26 +146,21 @@ export function ExpenseForm({
 
       <div className="field">
         <span className="field-label">Categoría</span>
-        <div className="chips">
-          {GASTO_CATEGORIAS.map((c) => (
-            <button
-              type="button"
-              key={c}
-              className={category === c ? 'chip chip-active' : 'chip'}
-              onClick={() => setCategory(category === c ? '' : c)}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-        {category === 'Otros' && (
-          <input
-            type="text"
-            value={customCategory}
-            onChange={(e) => setCustomCategory(e.target.value)}
-            placeholder="Escribí la categoría (opcional)"
-            className="custom-cat"
-          />
+        {cats.length === 0 ? (
+          <span className="muted-inline">Agregá categorías desde “Gestionar”.</span>
+        ) : (
+          <div className="chips">
+            {cats.map((c) => (
+              <button
+                type="button"
+                key={c}
+                className={category === c ? 'chip chip-active' : 'chip'}
+                onClick={() => setCategory(category === c ? '' : c)}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
@@ -200,21 +182,12 @@ export function ExpenseForm({
 
       <label className="field">
         <span className="field-label">Fecha</span>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
       </label>
 
       {showRecurring && (
         <label className="check-row">
-          <input
-            type="checkbox"
-            checked={isRecurring}
-            onChange={(e) => setIsRecurring(e.target.checked)}
-          />
+          <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
           <span>Se repite todos los meses (ej: alquiler, servicios)</span>
         </label>
       )}

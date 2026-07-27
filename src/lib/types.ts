@@ -6,10 +6,24 @@ export interface Income {
   amount: number
   currency: Currency
   category: string | null
+  source: string | null
   collection_method: string | null
   is_initial: boolean
   is_recurring: boolean
   income_date: string // YYYY-MM-DD
+  created_at: string
+}
+
+export interface Category {
+  id: string
+  kind: 'income' | 'expense'
+  name: string
+  created_at: string
+}
+
+export interface IncomeSource {
+  id: string
+  name: string
   created_at: string
 }
 
@@ -22,6 +36,7 @@ export interface IncomeOverride {
   amount: number | null
   currency: Currency | null
   category: string | null
+  source: string | null
   collection_method: string | null
   override_date: string | null // YYYY-MM-DD (día dentro del mes, si cambió)
   created_at: string

@@ -24,6 +24,7 @@ interface Props {
   items: MovItem[]
   overrides: MovOverride[]
   reload: () => Promise<void>
+  categorias: string[]
 }
 
 type FormMode = { mode: 'add' } | { mode: 'edit'; occ: MovOccurrence } | null
@@ -42,7 +43,7 @@ function toRow(v: ExpenseFormValues) {
   }
 }
 
-export function ExpensesCalendar({ items, overrides, reload }: Props) {
+export function ExpensesCalendar({ items, overrides, reload, categorias }: Props) {
   const hoy = ymd(todayLocal())
   const [view, setView] = useState({ y: hoy.y, m: hoy.m })
   const [selectedDay, setSelectedDay] = useState<number | null>(
@@ -222,6 +223,7 @@ export function ExpensesCalendar({ items, overrides, reload }: Props) {
             <ExpenseForm
               title="Nuevo gasto"
               submitLabel="Guardar"
+              categorias={categorias}
               initial={{ date: isoDate(view.y, view.m, selectedDay) }}
               onSubmit={handleSubmit}
               onCancel={() => setFormMode(null)}
@@ -233,6 +235,7 @@ export function ExpensesCalendar({ items, overrides, reload }: Props) {
               title={formMode.occ.kind === 'recur' ? 'Editar (solo este mes)' : 'Editar gasto'}
               submitLabel="Guardar cambios"
               showRecurring={formMode.occ.kind === 'one'}
+              categorias={categorias}
               initial={{
                 description: formMode.occ.description,
                 amount: formMode.occ.amount,

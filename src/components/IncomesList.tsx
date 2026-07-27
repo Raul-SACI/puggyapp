@@ -3,18 +3,37 @@ import { supabase } from '../lib/supabase'
 import { formatDateLocal, formatMoney, type Currency } from '../lib/format'
 import type { Income } from '../lib/types'
 import { IncomeForm, type IncomeFormValues } from './IncomeForm'
+import { TagManager } from './TagManager'
 
 interface Props {
   incomes: Income[]
   loading: boolean
   error: string
   reload: () => Promise<void>
+  categorias: string[]
+  fuentes: string[]
+  onAddCategoria: (name: string) => Promise<void>
+  onDeleteCategoria: (name: string) => Promise<void>
+  onAddFuente: (name: string) => Promise<void>
+  onDeleteFuente: (name: string) => Promise<void>
 }
 
-export function IncomesList({ incomes, loading, error, reload }: Props) {
+export function IncomesList({
+  incomes,
+  loading,
+  error,
+  reload,
+  categorias,
+  fuentes,
+  onAddCategoria,
+  onDeleteCategoria,
+  onAddFuente,
+  onDeleteFuente,
+}: Props) {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Income | null>(null)
   const [newAsInitial, setNewAsInitial] = useState(false)
+  const [showManage, setShowManage] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
 
@@ -94,13 +113,29 @@ export function IncomesList({ incomes, loading, error, reload }: Props) {
       )}
 
       {!showForm && (
-        <div className="btn-pair">
-          <button type="button" className="btn-primary" onClick={() => openNew(false)}>
-            + Agregar ingreso
+        <>
+          <div className="btn-pair">
+            <button type="button" className="btn-primary" onClick={() => openNew(false)}>
+              + Agregar ingreso
+            </button>
+            <button type="button" className="btn-secondary" onClick={() => openNew(true)}>
+              + Saldo inicial
+            </button>
+          </div>
+          <button
+            type="button"
+            className="btn-link manage-link"
+            onClick={() => setShowManage((v) => !v)}
+          >
+            {showManage ? 'Cerrar gestión' : '⚙︎ Gestionar categorías y fuentes'}
           </button>
-          <button type="button" className="btn-secondary" onClick={() => openNew(true)}>
-            + Saldo inicial
-          </button>
+        </>
+      )}
+
+      {showManage && !showForm && (
+        <div className="card manage-card">
+          <TagManager title="Categorías" items={categorias} onAdd={onAddCategoria} onDelete={onDeleteCategoria} />
+          <TagManager title="Fuentes de ingreso" items={fuentes} onAdd={onAddFuente} onDelete={onDeleteFuente} />
         </div>
       )}
 
@@ -116,6 +151,8 @@ export function IncomesList({ incomes, loading, error, reload }: Props) {
                 : 'Nuevo ingreso'
           }
           submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
+          categorias={categorias}
+          fuentes={fuentes}
           initial={editing ?? { is_initial: newAsInitial }}
           onSubmit={handleSubmit}
           onCancel={() => {
@@ -149,6 +186,7 @@ export function IncomesList({ incomes, loading, error, reload }: Props) {
               <div className="item-meta">
                 {inc.is_initial && <span className="tag tag-initial">Saldo inicial</span>}
                 {inc.category && <span className="tag">{inc.category}</span>}
+                {inc.source && <span className="tag tag-source">{inc.source}</span>}
                 {inc.collection_method && <span className="tag tag-pay">{inc.collection_method}</span>}
                 {inc.is_recurring && <span className="tag tag-recur">Mensual</span>}
                 <span className="item-date">{formatDateLocal(inc.income_date)}</span>

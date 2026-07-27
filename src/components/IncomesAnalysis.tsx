@@ -62,8 +62,9 @@ export function IncomesAnalysis({ incomes, overrides, inflation, reload }: Props
     const windowMax = Math.max(0, ...window.map((w) => w.total))
     const avg = window.reduce((a, w) => a + w.total, 0) / window.length
 
-    // Categorías del mes y medios de cobro
+    // Categorías del mes, fuentes y medios de cobro
     const catMap = new Map<string, number>()
+    const srcMap = new Map<string, number>()
     const colMap = new Map<string, number>()
     let count = 0
     let maxSingle = 0
@@ -73,6 +74,8 @@ export function IncomesAnalysis({ incomes, overrides, inflation, reload }: Props
       if (o.amount > maxSingle) maxSingle = o.amount
       const name = o.category || 'Sin categoría'
       catMap.set(name, (catMap.get(name) ?? 0) + o.amount)
+      const src = o.source || 'Sin fuente'
+      srcMap.set(src, (srcMap.get(src) ?? 0) + o.amount)
       const col = o.collection_method || 'Sin especificar'
       colMap.set(col, (colMap.get(col) ?? 0) + o.amount)
     }
@@ -84,8 +87,14 @@ export function IncomesAnalysis({ incomes, overrides, inflation, reload }: Props
       .map(([name, amount]) => ({ name, amount }))
       .sort((a, b) => b.amount - a.amount)
     const colMaxVal = Math.max(0, ...collections.map((c) => c.amount))
+    const sources: CatRow[] = [...srcMap.entries()]
+      .map(([name, amount]) => ({ name, amount }))
+      .sort((a, b) => b.amount - a.amount)
+    const srcMaxVal = Math.max(0, ...sources.map((c) => c.amount))
 
     return {
+      sources,
+      srcMaxVal,
       curTotal,
       prevTotal,
       delta,
@@ -324,6 +333,31 @@ export function IncomesAnalysis({ incomes, overrides, inflation, reload }: Props
           <div className="hbars">
             {data.categories.map((c) => {
               const pct = data.catMaxVal > 0 ? (c.amount / data.catMaxVal) * 100 : 0
+              return (
+                <div className="hbar-row" key={c.name}>
+                  <div className="hbar-head">
+                    <span className="hbar-name">{c.name}</span>
+                    <span className="hbar-amount">{formatMoney(c.amount, currency)}</span>
+                  </div>
+                  <div className="hbar-track">
+                    <div className="hbar-fill" style={{ width: `${Math.max(pct, 2)}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Ingresos por fuente */}
+      <div className="card chart-card">
+        <h3 className="chart-title">Ingresos por fuente ({monthName})</h3>
+        {data.sources.length === 0 ? (
+          <p className="muted">No hay ingresos este mes en esta moneda.</p>
+        ) : (
+          <div className="hbars">
+            {data.sources.map((c) => {
+              const pct = data.srcMaxVal > 0 ? (c.amount / data.srcMaxVal) * 100 : 0
               return (
                 <div className="hbar-row" key={c.name}>
                   <div className="hbar-head">

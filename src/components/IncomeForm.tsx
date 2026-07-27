@@ -1,19 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { parseMoney, todayLocal, type Currency } from '../lib/format'
 
-export const CATEGORIAS = [
-  'Sueldo',
-  'Dividendos ARG',
-  'Alquiler',
-  'Venta de Inmuebles',
-  'Venta de Rodados',
-  'Dividendos EEUU',
-  'Aguinaldo',
-  'Venta de Servicio',
-  'Rendimientos',
-  'Otro',
-]
-
 export const MEDIOS_COBRO = [
   'Efectivo',
   'Transferencia',
@@ -27,6 +14,7 @@ export interface IncomeFormValues {
   amount: number
   currency: Currency
   category: string | null
+  source: string | null
   collection_method: string | null
   is_initial: boolean
   is_recurring: boolean
@@ -38,6 +26,7 @@ interface Initial {
   amount?: number
   currency?: Currency
   category?: string | null
+  source?: string | null
   collection_method?: string | null
   is_initial?: boolean
   is_recurring?: boolean
@@ -47,6 +36,8 @@ interface Initial {
 interface Props {
   title: string
   submitLabel: string
+  categorias: string[]
+  fuentes: string[]
   initial?: Initial
   showRecurring?: boolean
   showInitial?: boolean
@@ -54,29 +45,33 @@ interface Props {
   onCancel: () => void
 }
 
+/** Mete el valor inicial en la lista si no está (para poder mostrarlo seleccionado). */
+function withInitial(list: string[], value?: string | null): string[] {
+  if (value && !list.includes(value)) return [value, ...list]
+  return list
+}
+
 export function IncomeForm({
   title,
   submitLabel,
+  categorias,
+  fuentes,
   initial,
   showRecurring = true,
   showInitial = true,
   onSubmit,
   onCancel,
 }: Props) {
-  const initCat = initial?.category ?? ''
-  const presetMatch = CATEGORIAS.includes(initCat)
+  const cats = withInitial(categorias, initial?.category)
+  const srcs = withInitial(fuentes, initial?.source)
 
   const [description, setDescription] = useState(initial?.description ?? '')
   const [amount, setAmount] = useState(
     initial?.amount != null ? String(initial.amount).replace('.', ',') : '',
   )
   const [currency, setCurrency] = useState<Currency>(initial?.currency ?? 'ARS')
-  const [category, setCategory] = useState<string>(
-    initCat ? (presetMatch ? initCat : 'Otro') : '',
-  )
-  const [customCategory, setCustomCategory] = useState(
-    initCat && !presetMatch ? initCat : '',
-  )
+  const [category, setCategory] = useState<string>(initial?.category ?? '')
+  const [source, setSource] = useState<string>(initial?.source ?? '')
   const [collection, setCollection] = useState<string>(initial?.collection_method ?? '')
   const [isInitial, setIsInitial] = useState(initial?.is_initial ?? false)
   const [isRecurring, setIsRecurring] = useState(initial?.is_recurring ?? false)
@@ -98,7 +93,6 @@ export function IncomeForm({
       setError('El monto tiene que ser un número mayor a cero.')
       return
     }
-    const cat = category === 'Otro' ? customCategory.trim() || null : category || null
 
     setSaving(true)
     try {
@@ -106,7 +100,8 @@ export function IncomeForm({
         description: desc,
         amount: monto,
         currency,
-        category: cat,
+        category: category || null,
+        source: source || null,
         collection_method: collection || null,
         is_initial: isInitial,
         is_recurring: isInitial ? false : isRecurring,
@@ -180,60 +175,64 @@ export function IncomeForm({
       </div>
 
       {!isInitial && (
-        <div className="field">
-          <span className="field-label">Categoría</span>
-          <div className="chips">
-            {CATEGORIAS.map((c) => (
-              <button
-                type="button"
-                key={c}
-                className={category === c ? 'chip chip-active' : 'chip'}
-                onClick={() => setCategory(category === c ? '' : c)}
-              >
-                {c}
-              </button>
-            ))}
+        <>
+          <div className="field">
+            <span className="field-label">Categoría</span>
+            {cats.length === 0 ? (
+              <span className="muted-inline">Agregá categorías desde “Gestionar”.</span>
+            ) : (
+              <div className="chips">
+                {cats.map((c) => (
+                  <button
+                    type="button"
+                    key={c}
+                    className={category === c ? 'chip chip-active' : 'chip'}
+                    onClick={() => setCategory(category === c ? '' : c)}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          {category === 'Otro' && (
-            <input
-              type="text"
-              value={customCategory}
-              onChange={(e) => setCustomCategory(e.target.value)}
-              placeholder="Escribí la categoría"
-              className="custom-cat"
-            />
-          )}
-        </div>
+
+          <div className="field">
+            <span className="field-label">Fuente de ingreso</span>
+            {srcs.length === 0 ? (
+              <span className="muted-inline">Agregá fuentes desde “Gestionar”.</span>
+            ) : (
+              <div className="chips">
+                {srcs.map((s) => (
+                  <button
+                    type="button"
+                    key={s}
+                    className={source === s ? 'chip chip-active' : 'chip'}
+                    onClick={() => setSource(source === s ? '' : s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       <label className="field">
         <span className="field-label">Fecha</span>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
       </label>
 
       {showInitial && (
         <label className="check-row">
-          <input
-            type="checkbox"
-            checked={isInitial}
-            onChange={(e) => setIsInitial(e.target.checked)}
-          />
+          <input type="checkbox" checked={isInitial} onChange={(e) => setIsInitial(e.target.checked)} />
           <span>Es un saldo inicial (lo que ya tenés hoy, no un ingreso del mes)</span>
         </label>
       )}
 
       {showRecurring && !isInitial && (
         <label className="check-row">
-          <input
-            type="checkbox"
-            checked={isRecurring}
-            onChange={(e) => setIsRecurring(e.target.checked)}
-          />
+          <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
           <span>Se repite todos los meses (ej: sueldo, alquiler)</span>
         </label>
       )}

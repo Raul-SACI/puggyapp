@@ -16,6 +16,7 @@ export interface Occurrence {
   amount: number
   currency: Currency
   category: string | null
+  source: string | null
   collection_method: string | null
 }
 
@@ -55,6 +56,7 @@ export function monthOccurrences(
           amount: inc.amount,
           currency: inc.currency,
           category: inc.category,
+          source: inc.source,
           collection_method: inc.collection_method,
         })
       }
@@ -70,6 +72,7 @@ export function monthOccurrences(
     let amount = inc.amount
     let currency = inc.currency
     let category = inc.category
+    let source = inc.source
     let collection_method = inc.collection_method
 
     if (ov?.status === 'edited') {
@@ -78,6 +81,7 @@ export function monthOccurrences(
       amount = ov.amount ?? inc.amount
       currency = ov.currency ?? inc.currency
       category = ov.category
+      source = ov.source
       collection_method = ov.collection_method
     }
 
@@ -90,6 +94,7 @@ export function monthOccurrences(
       amount,
       currency,
       category,
+      source,
       collection_method,
     })
   }
