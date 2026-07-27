@@ -7,6 +7,7 @@ import { ExpensesList } from './ExpensesList'
 import { ExpensesCalendar } from './ExpensesCalendar'
 import { ExpensesAnalysis } from './ExpensesAnalysis'
 import { RemindersView } from './RemindersView'
+import { SaveCelebration } from './SaveCelebration'
 
 type SubTab = 'lista' | 'calendario' | 'analisis' | 'recordatorios'
 
@@ -17,6 +18,7 @@ export function ExpensesScreen() {
   const [categorias, setCategorias] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [celebrate, setCelebrate] = useState(false)
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -89,6 +91,7 @@ export function ExpensesScreen() {
 
   return (
     <div className="screen">
+      {celebrate && <SaveCelebration kind="out" onDone={() => setCelebrate(false)} />}
       <div className="subtabs">
         <button type="button" className={subtab === 'lista' ? 'subtab subtab-on' : 'subtab'} onClick={() => setSubtab('lista')}>
           Lista
@@ -113,10 +116,17 @@ export function ExpensesScreen() {
           categorias={categorias}
           onAddCategoria={addCategoria}
           onDeleteCategoria={deleteCategoria}
+          onSaved={() => setCelebrate(true)}
         />
       )}
       {subtab === 'calendario' && (
-        <ExpensesCalendar items={items} overrides={overrides} reload={reload} categorias={categorias} />
+        <ExpensesCalendar
+          items={items}
+          overrides={overrides}
+          reload={reload}
+          categorias={categorias}
+          onSaved={() => setCelebrate(true)}
+        />
       )}
       {subtab === 'analisis' && <ExpensesAnalysis items={items} overrides={overrides} />}
       {subtab === 'recordatorios' && <RemindersView kind="pago" />}

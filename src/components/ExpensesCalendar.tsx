@@ -25,6 +25,7 @@ interface Props {
   overrides: MovOverride[]
   reload: () => Promise<void>
   categorias: string[]
+  onSaved?: () => void
 }
 
 type FormMode = { mode: 'add' } | { mode: 'edit'; occ: MovOccurrence } | null
@@ -43,7 +44,7 @@ function toRow(v: ExpenseFormValues) {
   }
 }
 
-export function ExpensesCalendar({ items, overrides, reload, categorias }: Props) {
+export function ExpensesCalendar({ items, overrides, reload, categorias, onSaved }: Props) {
   const hoy = ymd(todayLocal())
   const [view, setView] = useState({ y: hoy.y, m: hoy.m })
   const [selectedDay, setSelectedDay] = useState<number | null>(
@@ -82,6 +83,7 @@ export function ExpensesCalendar({ items, overrides, reload, categorias }: Props
   }
 
   async function handleSubmit(values: ExpenseFormValues) {
+    const wasAdd = formMode?.mode === 'add'
     if (formMode?.mode === 'add') {
       const { error } = await supabase.from('expenses').insert(toRow(values))
       if (error) throw error
@@ -111,6 +113,7 @@ export function ExpensesCalendar({ items, overrides, reload, categorias }: Props
     }
     setFormMode(null)
     await reload()
+    if (wasAdd) onSaved?.()
   }
 
   async function handleDelete(occ: MovOccurrence) {

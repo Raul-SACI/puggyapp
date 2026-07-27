@@ -16,6 +16,7 @@ interface Props {
   onDeleteCategoria: (name: string) => Promise<void>
   onAddFuente: (name: string) => Promise<void>
   onDeleteFuente: (name: string) => Promise<void>
+  onSaved?: () => void
 }
 
 export function IncomesList({
@@ -29,6 +30,7 @@ export function IncomesList({
   onDeleteCategoria,
   onAddFuente,
   onDeleteFuente,
+  onSaved,
 }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Income | null>(null)
@@ -57,6 +59,7 @@ export function IncomesList({
   }
 
   async function handleSubmit(values: IncomeFormValues) {
+    const wasNew = !editing
     if (editing) {
       const { error } = await supabase.from('incomes').update(values).eq('id', editing.id)
       if (error) throw error
@@ -67,6 +70,7 @@ export function IncomesList({
     setShowForm(false)
     setEditing(null)
     await reload()
+    if (wasNew) onSaved?.()
   }
 
   async function handleDelete(id: string) {

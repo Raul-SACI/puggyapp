@@ -21,6 +21,7 @@ interface Props {
   reload: () => Promise<void>
   categorias: string[]
   fuentes: string[]
+  onSaved?: () => void
 }
 
 type FormMode =
@@ -30,7 +31,7 @@ type FormMode =
 
 const DIAS = ['LU', 'MA', 'MI', 'JU', 'VI', 'SA', 'DO']
 
-export function IncomesCalendar({ incomes, overrides, reload, categorias, fuentes }: Props) {
+export function IncomesCalendar({ incomes, overrides, reload, categorias, fuentes, onSaved }: Props) {
   const hoy = ymd(todayLocal())
   const [view, setView] = useState({ y: hoy.y, m: hoy.m })
   const [selectedDay, setSelectedDay] = useState<number | null>(
@@ -72,6 +73,7 @@ export function IncomesCalendar({ incomes, overrides, reload, categorias, fuente
   }
 
   async function handleSubmit(values: IncomeFormValues) {
+    const wasAdd = formMode?.mode === 'add'
     if (formMode?.mode === 'add') {
       const { error } = await supabase.from('incomes').insert(values)
       if (error) throw error
@@ -105,6 +107,7 @@ export function IncomesCalendar({ incomes, overrides, reload, categorias, fuente
     }
     setFormMode(null)
     await reload()
+    if (wasAdd) onSaved?.()
   }
 
   async function handleDelete(occ: Occurrence) {

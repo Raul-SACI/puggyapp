@@ -13,6 +13,7 @@ interface Props {
   categorias: string[]
   onAddCategoria: (name: string) => Promise<void>
   onDeleteCategoria: (name: string) => Promise<void>
+  onSaved?: () => void
 }
 
 function toRow(v: ExpenseFormValues) {
@@ -35,6 +36,7 @@ export function ExpensesList({
   categorias,
   onAddCategoria,
   onDeleteCategoria,
+  onSaved,
 }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<MovItem | null>(null)
@@ -53,6 +55,7 @@ export function ExpensesList({
   }, [items])
 
   async function handleSubmit(values: ExpenseFormValues) {
+    const wasNew = !editing
     if (editing) {
       const { error } = await supabase.from('expenses').update(toRow(values)).eq('id', editing.id)
       if (error) throw error
@@ -63,6 +66,7 @@ export function ExpensesList({
     setShowForm(false)
     setEditing(null)
     await reload()
+    if (wasNew) onSaved?.()
   }
 
   async function handleDelete(id: string) {

@@ -834,6 +834,105 @@ input:focus {
   border-top: 2px solid var(--border);
 }
 
+/* ---------- Animación al guardar (celebración) ---------- */
+.celebrate-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 1000;
+  animation: celebfade 0.25s ease;
+  pointer-events: none;
+}
+
+.celebrate-box {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 24px 30px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: celebpop 0.3s ease;
+}
+
+.celebrate-stage {
+  position: relative;
+  width: 170px;
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.celebrate-pig {
+  width: 120px;
+  height: 120px;
+}
+
+.celebrate-text {
+  font-weight: 800;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.coin {
+  position: absolute;
+  top: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fcd34d;
+  border: 2px solid #eab308;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #a16207;
+  font-size: 14px;
+}
+
+.coin-in {
+  animation: coin-in 1s ease-in 0s 2 both;
+}
+
+.coin-out {
+  animation: coin-out 1s ease-out 0s 2 both;
+}
+
+@keyframes celebfade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes celebpop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes coin-in {
+  0% { transform: translateY(-46px); opacity: 0; }
+  25% { opacity: 1; }
+  70% { transform: translateY(60px); opacity: 1; }
+  100% { transform: translateY(64px); opacity: 0; }
+}
+
+@keyframes coin-out {
+  0% { transform: translate(0, 60px); opacity: 1; }
+  100% { transform: translate(var(--dx, 0), -46px) scale(0.5); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coin-in,
+  .coin-out,
+  .celebrate-box {
+    animation: none;
+  }
+}
+
 /* ---------- Botones de color por sección ---------- */
 .btn-red {
   background: var(--danger);

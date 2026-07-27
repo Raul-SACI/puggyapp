@@ -6,6 +6,7 @@ import { IncomesList } from './IncomesList'
 import { IncomesCalendar } from './IncomesCalendar'
 import { IncomesAnalysis } from './IncomesAnalysis'
 import { RemindersView } from './RemindersView'
+import { SaveCelebration } from './SaveCelebration'
 
 type SubTab = 'lista' | 'calendario' | 'analisis' | 'recordatorios'
 
@@ -18,6 +19,7 @@ export function IncomesScreen() {
   const [fuentes, setFuentes] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [celebrate, setCelebrate] = useState(false)
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -72,6 +74,7 @@ export function IncomesScreen() {
 
   return (
     <div className="screen">
+      {celebrate && <SaveCelebration kind="in" onDone={() => setCelebrate(false)} />}
       <div className="subtabs">
         <button type="button" className={subtab === 'lista' ? 'subtab subtab-on' : 'subtab'} onClick={() => setSubtab('lista')}>
           Lista
@@ -99,6 +102,7 @@ export function IncomesScreen() {
           onDeleteCategoria={deleteCategoria}
           onAddFuente={addFuente}
           onDeleteFuente={deleteFuente}
+          onSaved={() => setCelebrate(true)}
         />
       )}
       {subtab === 'calendario' && (
@@ -108,6 +112,7 @@ export function IncomesScreen() {
           reload={reload}
           categorias={categorias}
           fuentes={fuentes}
+          onSaved={() => setCelebrate(true)}
         />
       )}
       {subtab === 'analisis' && (
