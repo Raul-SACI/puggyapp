@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatDateLocal, formatMoney, type Currency } from '../lib/format'
 import type { Income } from '../lib/types'
-import { IncomeForm, type IncomeFormValues } from './IncomeForm'
+import { IncomeForm, MEDIOS_COBRO, type IncomeFormValues } from './IncomeForm'
 import { TagManager } from './TagManager'
+import { isVoiceSupported, startVoice } from '../lib/voice'
+import { parseVoice, type ParsedVoice } from '../lib/voiceParse'
 
 interface Props {
   incomes: Income[]
@@ -38,6 +40,10 @@ export function IncomesList({
   const [showManage, setShowManage] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
+  const [listening, setListening] = useState(false)
+  const [voiceError, setVoiceError] = useState('')
+  const [voice, setVoice] = useState<ParsedVoice | null>(null)
+  const [transcript, setTranscript] = useState('')
 
   const { flow, initial } = useMemo(() => {
     const flow: Record<Currency, number> = { ARS: 0, USD: 0 }
@@ -53,9 +59,39 @@ export function IncomesList({
 
   function openNew(asInitial: boolean) {
     setEditing(null)
+    setVoice(null)
     setNewAsInitial(asInitial)
     setShowForm(true)
     setConfirmDelete(null)
+  }
+
+  function startVoiceFlow() {
+    setVoiceError('')
+    if (!isVoiceSupported()) {
+      setVoiceError('Tu navegador no soporta dictado por voz. Probá en Chrome (Android).')
+      return
+    }
+    setListening(true)
+    startVoice(
+      (t) => {
+        setTranscript(t)
+        setVoice(parseVoice(t, { categorias, fuentes, metodos: MEDIOS_COBRO, fallback: 'Ingreso' }))
+        setEditing(null)
+        setShowForm(true)
+        setListening(false)
+      },
+      (m) => {
+        setListening(false)
+        setVoiceError(
+          m === 'no-support'
+            ? 'Tu navegador no soporta dictado por voz. Probá en Chrome (Android).'
+            : m === 'not-allowed' || m === 'service-not-allowed'
+              ? 'Necesito permiso para usar el micrófono.'
+              : 'No te escuché bien, probá de nuevo.',
+        )
+      },
+      () => setListening(false),
+    )
   }
 
   async function handleSubmit(values: IncomeFormValues) {
@@ -69,6 +105,8 @@ export function IncomesList({
     }
     setShowForm(false)
     setEditing(null)
+    setVoice(null)
+    setTranscript('')
     await reload()
     if (wasNew) onSaved?.()
   }
@@ -126,6 +164,17 @@ export function IncomesList({
               + Saldo inicial
             </button>
           </div>
+
+          <button
+            type="button"
+            className={listening ? 'btn-voice listening' : 'btn-voice'}
+            onClick={startVoiceFlow}
+            disabled={listening}
+          >
+            {listening ? '🎤 Escuchando… hablá ahora' : '🎤 Cargar por voz'}
+          </button>
+          {voiceError && <p className="error-msg">{voiceError}</p>}
+
           <button
             type="button"
             className="btn-link manage-link"
@@ -144,26 +193,50 @@ export function IncomesList({
       )}
 
       {showForm && (
-        <IncomeForm
-          title={
-            editing
-              ? editing.is_initial
-                ? 'Editar saldo inicial'
-                : 'Editar ingreso'
-              : newAsInitial
-                ? 'Nuevo saldo inicial'
-                : 'Nuevo ingreso'
-          }
-          submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
-          categorias={categorias}
-          fuentes={fuentes}
-          initial={editing ?? { is_initial: newAsInitial }}
-          onSubmit={handleSubmit}
-          onCancel={() => {
-            setShowForm(false)
-            setEditing(null)
-          }}
-        />
+        <>
+          {voice && transcript && (
+            <p className="voice-heard">🎤 Escuché: “{transcript}”. Revisá y guardá.</p>
+          )}
+          <IncomeForm
+            title={
+              voice
+                ? 'Revisá el ingreso'
+                : editing
+                  ? editing.is_initial
+                    ? 'Editar saldo inicial'
+                    : 'Editar ingreso'
+                  : newAsInitial
+                    ? 'Nuevo saldo inicial'
+                    : 'Nuevo ingreso'
+            }
+            submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
+            categorias={categorias}
+            fuentes={fuentes}
+            initial={
+              editing ??
+              (voice
+                ? {
+                    description: voice.description,
+                    amount: voice.amount ?? undefined,
+                    currency: voice.currency,
+                    category: voice.category,
+                    source: voice.source,
+                    collection_method: voice.method,
+                    is_recurring: voice.is_recurring,
+                    income_date: voice.date,
+                    is_initial: false,
+                  }
+                : { is_initial: newAsInitial })
+            }
+            onSubmit={handleSubmit}
+            onCancel={() => {
+              setShowForm(false)
+              setEditing(null)
+              setVoice(null)
+              setTranscript('')
+            }}
+          />
+        </>
       )}
 
       <div className="list">
@@ -214,6 +287,7 @@ export function IncomesList({
                   className="btn-link"
                   onClick={() => {
                     setEditing(inc)
+                    setVoice(null)
                     setShowForm(true)
                     setConfirmDelete(null)
                   }}
