@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
-import { PiggyLogo } from './PiggyLogo'
+import { PiggyMascot } from './PiggyMascot'
 import { DashboardScreen } from './DashboardScreen'
 import { IncomesScreen } from './IncomesScreen'
 import { ExpensesScreen } from './ExpensesScreen'
@@ -13,11 +13,13 @@ export function AppShell() {
   const { signOut } = useAuth()
   const [tab, setTab] = useState<Tab>('dashboard')
 
+  const mascot = tab === 'gastos' ? 'sad' : tab === 'inversiones' ? 'invest' : 'coins'
+
   return (
     <div className="app-shell">
       <header className="topbar">
         <span className="topbar-brand">
-          <PiggyLogo size={28} />
+          <PiggyMascot variant={mascot} size={44} />
           Puggy
         </span>
         <button type="button" className="btn-ghost" onClick={signOut}>
