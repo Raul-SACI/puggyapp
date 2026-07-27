@@ -11,3 +11,12 @@ createRoot(document.getElementById('root')!).render(
     </AuthProvider>
   </StrictMode>,
 )
+
+// Registra el service worker para poder instalar Puggy como app en el celular.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Si falla el registro, la app igual funciona normalmente en el navegador.
+    })
+  })
+}
