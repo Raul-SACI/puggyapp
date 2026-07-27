@@ -93,7 +93,7 @@ export function InvestmentsList({ items, loading, error, reload }: Props) {
       {!showForm && (
         <button
           type="button"
-          className="btn-primary"
+          className="btn-primary btn-blue"
           onClick={() => {
             setEditing(null)
             setShowForm(true)

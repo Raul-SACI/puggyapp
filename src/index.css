@@ -749,6 +749,43 @@ input:focus {
   border-bottom: none;
 }
 
+/* ---------- Botones de color por sección ---------- */
+.btn-red {
+  background: var(--danger);
+}
+.btn-red:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn-blue {
+  background: #2563eb;
+}
+.btn-blue:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.btn-pink {
+  background: #ec4899;
+}
+.btn-pink:hover:not(:disabled) {
+  background: #db2777;
+}
+
+.btn-pair {
+  display: flex;
+  gap: 10px;
+}
+.btn-pair .btn-primary,
+.btn-pair .btn-secondary {
+  flex: 1;
+  margin-top: 0;
+}
+
+.tag-initial {
+  color: #475569;
+  background: rgba(100, 116, 139, 0.15);
+}
+
 .item-date {
   font-size: 12px;
   color: var(--text-soft);

@@ -14,11 +14,21 @@ export const CATEGORIAS = [
   'Otro',
 ]
 
+export const MEDIOS_COBRO = [
+  'Efectivo',
+  'Transferencia',
+  'Billetera virtual',
+  'Cheque',
+  'Otros',
+]
+
 export interface IncomeFormValues {
   description: string
   amount: number
   currency: Currency
   category: string | null
+  collection_method: string | null
+  is_initial: boolean
   is_recurring: boolean
   income_date: string
 }
@@ -28,6 +38,8 @@ interface Initial {
   amount?: number
   currency?: Currency
   category?: string | null
+  collection_method?: string | null
+  is_initial?: boolean
   is_recurring?: boolean
   income_date?: string
 }
@@ -37,6 +49,7 @@ interface Props {
   submitLabel: string
   initial?: Initial
   showRecurring?: boolean
+  showInitial?: boolean
   onSubmit: (values: IncomeFormValues) => Promise<void>
   onCancel: () => void
 }
@@ -46,6 +59,7 @@ export function IncomeForm({
   submitLabel,
   initial,
   showRecurring = true,
+  showInitial = true,
   onSubmit,
   onCancel,
 }: Props) {
@@ -63,6 +77,8 @@ export function IncomeForm({
   const [customCategory, setCustomCategory] = useState(
     initCat && !presetMatch ? initCat : '',
   )
+  const [collection, setCollection] = useState<string>(initial?.collection_method ?? '')
+  const [isInitial, setIsInitial] = useState(initial?.is_initial ?? false)
   const [isRecurring, setIsRecurring] = useState(initial?.is_recurring ?? false)
   const [date, setDate] = useState(initial?.income_date ?? todayLocal())
   const [saving, setSaving] = useState(false)
@@ -74,7 +90,7 @@ export function IncomeForm({
 
     const desc = description.trim()
     if (!desc) {
-      setError('Poné una descripción (ej: "Sueldo julio").')
+      setError('Poné una descripción (ej: "Sueldo julio" o "Saldo en banco").')
       return
     }
     const monto = parseMoney(amount)
@@ -91,7 +107,9 @@ export function IncomeForm({
         amount: monto,
         currency,
         category: cat,
-        is_recurring: isRecurring,
+        collection_method: collection || null,
+        is_initial: isInitial,
+        is_recurring: isInitial ? false : isRecurring,
         income_date: date,
       })
     } catch (err) {
@@ -110,13 +128,13 @@ export function IncomeForm({
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder='Ej: "Sueldo julio"'
+          placeholder={isInitial ? 'Ej: "Saldo en banco"' : 'Ej: "Sueldo julio"'}
           required
         />
       </label>
 
       <div className="field">
-        <span className="field-label">Monto y moneda</span>
+        <span className="field-label">{isInitial ? 'Saldo y moneda' : 'Monto y moneda'}</span>
         <div className="amount-row">
           <input
             type="text"
@@ -146,29 +164,47 @@ export function IncomeForm({
       </div>
 
       <div className="field">
-        <span className="field-label">Categoría</span>
+        <span className="field-label">Medio de cobro</span>
         <div className="chips">
-          {CATEGORIAS.map((c) => (
+          {MEDIOS_COBRO.map((p) => (
             <button
               type="button"
-              key={c}
-              className={category === c ? 'chip chip-active' : 'chip'}
-              onClick={() => setCategory(category === c ? '' : c)}
+              key={p}
+              className={collection === p ? 'chip chip-active' : 'chip'}
+              onClick={() => setCollection(collection === p ? '' : p)}
             >
-              {c}
+              {p}
             </button>
           ))}
         </div>
-        {category === 'Otro' && (
-          <input
-            type="text"
-            value={customCategory}
-            onChange={(e) => setCustomCategory(e.target.value)}
-            placeholder="Escribí la categoría"
-            className="custom-cat"
-          />
-        )}
       </div>
+
+      {!isInitial && (
+        <div className="field">
+          <span className="field-label">Categoría</span>
+          <div className="chips">
+            {CATEGORIAS.map((c) => (
+              <button
+                type="button"
+                key={c}
+                className={category === c ? 'chip chip-active' : 'chip'}
+                onClick={() => setCategory(category === c ? '' : c)}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          {category === 'Otro' && (
+            <input
+              type="text"
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              placeholder="Escribí la categoría"
+              className="custom-cat"
+            />
+          )}
+        </div>
+      )}
 
       <label className="field">
         <span className="field-label">Fecha</span>
@@ -180,7 +216,18 @@ export function IncomeForm({
         />
       </label>
 
-      {showRecurring && (
+      {showInitial && (
+        <label className="check-row">
+          <input
+            type="checkbox"
+            checked={isInitial}
+            onChange={(e) => setIsInitial(e.target.checked)}
+          />
+          <span>Es un saldo inicial (lo que ya tenés hoy, no un ingreso del mes)</span>
+        </label>
+      )}
+
+      {showRecurring && !isInitial && (
         <label className="check-row">
           <input
             type="checkbox"

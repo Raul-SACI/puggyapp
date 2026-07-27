@@ -119,7 +119,7 @@ export function GoalsScreen() {
       {!showForm && (
         <button
           type="button"
-          className="btn-primary"
+          className="btn-primary btn-pink"
           onClick={() => {
             setEditing(null)
             setShowForm(true)

@@ -78,7 +78,7 @@ export function ExpensesList({ items, loading, error, reload }: Props) {
       {!showForm && (
         <button
           type="button"
-          className="btn-primary"
+          className="btn-primary btn-red"
           onClick={() => {
             setEditing(null)
             setShowForm(true)

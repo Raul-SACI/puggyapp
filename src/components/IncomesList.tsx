@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { formatDateLocal, formatMoney } from '../lib/format'
+import { formatDateLocal, formatMoney, type Currency } from '../lib/format'
 import type { Income } from '../lib/types'
 import { IncomeForm, type IncomeFormValues } from './IncomeForm'
 
@@ -14,37 +14,32 @@ interface Props {
 export function IncomesList({ incomes, loading, error, reload }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Income | null>(null)
+  const [newAsInitial, setNewAsInitial] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
 
-  const totals = useMemo(() => {
-    let ars = 0
-    let usd = 0
+  const { flow, initial } = useMemo(() => {
+    const flow: Record<Currency, number> = { ARS: 0, USD: 0 }
+    const initial: Record<Currency, number> = { ARS: 0, USD: 0 }
     for (const i of incomes) {
-      if (i.currency === 'ARS') ars += i.amount
-      else usd += i.amount
+      if (i.is_initial) initial[i.currency] += i.amount
+      else flow[i.currency] += i.amount
     }
-    return { ars, usd }
+    return { flow, initial }
   }, [incomes])
 
-  function openNew() {
-    setEditing(null)
-    setShowForm(true)
-    setConfirmDelete(null)
-  }
+  const hasInitial = initial.ARS > 0 || initial.USD > 0
 
-  function openEdit(inc: Income) {
-    setEditing(inc)
+  function openNew(asInitial: boolean) {
+    setEditing(null)
+    setNewAsInitial(asInitial)
     setShowForm(true)
     setConfirmDelete(null)
   }
 
   async function handleSubmit(values: IncomeFormValues) {
     if (editing) {
-      const { error } = await supabase
-        .from('incomes')
-        .update(values)
-        .eq('id', editing.id)
+      const { error } = await supabase.from('incomes').update(values).eq('id', editing.id)
       if (error) throw error
     } else {
       const { error } = await supabase.from('incomes').insert(values)
@@ -58,9 +53,8 @@ export function IncomesList({ incomes, loading, error, reload }: Props) {
   async function handleDelete(id: string) {
     setActionError('')
     const { error } = await supabase.from('incomes').delete().eq('id', id)
-    if (error) {
-      setActionError(error.message)
-    } else {
+    if (error) setActionError(error.message)
+    else {
       setConfirmDelete(null)
       await reload()
     }
@@ -71,25 +65,58 @@ export function IncomesList({ incomes, loading, error, reload }: Props) {
       <div className="stat-row">
         <div className="card stat">
           <span className="stat-label">Ingresos en pesos</span>
-          <span className="stat-value">{formatMoney(totals.ars, 'ARS')}</span>
+          <span className="stat-value">{formatMoney(flow.ARS, 'ARS')}</span>
         </div>
         <div className="card stat">
           <span className="stat-label">Ingresos en dólares</span>
-          <span className="stat-value">{formatMoney(totals.usd, 'USD')}</span>
+          <span className="stat-value">{formatMoney(flow.USD, 'USD')}</span>
         </div>
       </div>
 
+      {hasInitial && (
+        <div className="card inv-summary">
+          <span className="stat-label">Saldos iniciales (lo que ya tenías)</span>
+          <div className="inv-rows">
+            {initial.ARS > 0 && (
+              <div className="inv-row">
+                <span>En pesos</span>
+                <span className="inv-val">{formatMoney(initial.ARS, 'ARS')}</span>
+              </div>
+            )}
+            {initial.USD > 0 && (
+              <div className="inv-row">
+                <span>En dólares</span>
+                <span className="inv-val">{formatMoney(initial.USD, 'USD')}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {!showForm && (
-        <button type="button" className="btn-primary" onClick={openNew}>
-          + Agregar ingreso
-        </button>
+        <div className="btn-pair">
+          <button type="button" className="btn-primary" onClick={() => openNew(false)}>
+            + Agregar ingreso
+          </button>
+          <button type="button" className="btn-secondary" onClick={() => openNew(true)}>
+            + Saldo inicial
+          </button>
+        </div>
       )}
 
       {showForm && (
         <IncomeForm
-          title={editing ? 'Editar ingreso' : 'Nuevo ingreso'}
+          title={
+            editing
+              ? editing.is_initial
+                ? 'Editar saldo inicial'
+                : 'Editar ingreso'
+              : newAsInitial
+                ? 'Nuevo saldo inicial'
+                : 'Nuevo ingreso'
+          }
           submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
-          initial={editing ?? undefined}
+          initial={editing ?? { is_initial: newAsInitial }}
           onSubmit={handleSubmit}
           onCancel={() => {
             setShowForm(false)
@@ -107,7 +134,8 @@ export function IncomesList({ incomes, loading, error, reload }: Props) {
 
         {!loading && !error && incomes.length === 0 && (
           <p className="muted">
-            Todavía no cargaste ingresos. Tocá “+ Agregar ingreso” para empezar.
+            Todavía no cargaste nada. Tocá “+ Agregar ingreso”, o “+ Saldo inicial” para
+            registrar lo que ya tenés hoy.
           </p>
         )}
 
@@ -116,12 +144,12 @@ export function IncomesList({ incomes, loading, error, reload }: Props) {
             <div className="item-main">
               <div className="item-top">
                 <span className="item-desc">{inc.description}</span>
-                <span className="item-amount">
-                  {formatMoney(inc.amount, inc.currency)}
-                </span>
+                <span className="item-amount">{formatMoney(inc.amount, inc.currency)}</span>
               </div>
               <div className="item-meta">
+                {inc.is_initial && <span className="tag tag-initial">Saldo inicial</span>}
                 {inc.category && <span className="tag">{inc.category}</span>}
+                {inc.collection_method && <span className="tag tag-pay">{inc.collection_method}</span>}
                 {inc.is_recurring && <span className="tag tag-recur">Mensual</span>}
                 <span className="item-date">{formatDateLocal(inc.income_date)}</span>
               </div>
@@ -130,24 +158,24 @@ export function IncomesList({ incomes, loading, error, reload }: Props) {
             {confirmDelete === inc.id ? (
               <div className="confirm">
                 <span>¿Borrar?</span>
-                <button
-                  type="button"
-                  className="btn-danger btn-small"
-                  onClick={() => handleDelete(inc.id)}
-                >
+                <button type="button" className="btn-danger btn-small" onClick={() => handleDelete(inc.id)}>
                   Sí
                 </button>
-                <button
-                  type="button"
-                  className="btn-secondary btn-small"
-                  onClick={() => setConfirmDelete(null)}
-                >
+                <button type="button" className="btn-secondary btn-small" onClick={() => setConfirmDelete(null)}>
                   No
                 </button>
               </div>
             ) : (
               <div className="item-actions">
-                <button type="button" className="btn-link" onClick={() => openEdit(inc)}>
+                <button
+                  type="button"
+                  className="btn-link"
+                  onClick={() => {
+                    setEditing(inc)
+                    setShowForm(true)
+                    setConfirmDelete(null)
+                  }}
+                >
                   Editar
                 </button>
                 <button

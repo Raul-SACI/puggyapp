@@ -16,6 +16,7 @@ export interface Occurrence {
   amount: number
   currency: Currency
   category: string | null
+  collection_method: string | null
 }
 
 /**
@@ -38,6 +39,9 @@ export function monthOccurrences(
   const occ: Occurrence[] = []
 
   for (const inc of incomes) {
+    // Los saldos iniciales no son ingresos del mes: no entran en los flujos.
+    if (inc.is_initial) continue
+
     const start = ymd(inc.income_date)
 
     if (!inc.is_recurring) {
@@ -51,6 +55,7 @@ export function monthOccurrences(
           amount: inc.amount,
           currency: inc.currency,
           category: inc.category,
+          collection_method: inc.collection_method,
         })
       }
       continue
@@ -65,6 +70,7 @@ export function monthOccurrences(
     let amount = inc.amount
     let currency = inc.currency
     let category = inc.category
+    let collection_method = inc.collection_method
 
     if (ov?.status === 'edited') {
       if (ov.override_date) day = Math.min(ymd(ov.override_date).d, maxDay)
@@ -72,6 +78,7 @@ export function monthOccurrences(
       amount = ov.amount ?? inc.amount
       currency = ov.currency ?? inc.currency
       category = ov.category
+      collection_method = ov.collection_method
     }
 
     occ.push({
@@ -83,6 +90,7 @@ export function monthOccurrences(
       amount,
       currency,
       category,
+      collection_method,
     })
   }
 

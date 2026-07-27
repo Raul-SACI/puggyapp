@@ -92,6 +92,7 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
             amount: values.amount,
             currency: values.currency,
             category: values.category,
+            collection_method: values.collection_method,
             override_date: values.income_date,
           },
           { onConflict: 'income_id,period' },
@@ -220,6 +221,7 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
             <IncomeForm
               title="Nuevo ingreso"
               submitLabel="Guardar"
+              showInitial={false}
               initial={{ income_date: isoDate(view.y, view.m, selectedDay) }}
               onSubmit={handleSubmit}
               onCancel={() => setFormMode(null)}
@@ -231,11 +233,13 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
               title={formMode.occ.kind === 'recur' ? 'Editar (solo este mes)' : 'Editar ingreso'}
               submitLabel="Guardar cambios"
               showRecurring={formMode.occ.kind === 'one'}
+              showInitial={false}
               initial={{
                 description: formMode.occ.description,
                 amount: formMode.occ.amount,
                 currency: formMode.occ.currency,
                 category: formMode.occ.category,
+                collection_method: formMode.occ.collection_method,
                 is_recurring: formMode.occ.income.is_recurring,
                 income_date: isoDate(view.y, view.m, formMode.occ.day),
               }}
@@ -258,6 +262,7 @@ export function IncomesCalendar({ incomes, overrides, reload }: Props) {
                   </div>
                   <div className="item-meta">
                     {o.category && <span className="tag">{o.category}</span>}
+                    {o.collection_method && <span className="tag tag-pay">{o.collection_method}</span>}
                     {o.kind === 'recur' && <span className="tag tag-recur">Mensual</span>}
                   </div>
                 </div>
