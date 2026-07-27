@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatDateLocal, formatMoney } from '../lib/format'
 import type { MovItem } from '../lib/movements'
-import { ExpenseForm, type ExpenseFormValues } from './ExpenseForm'
+import { ExpenseForm, MEDIOS_PAGO, type ExpenseFormValues } from './ExpenseForm'
 import { TagManager } from './TagManager'
+import { isVoiceSupported, startVoice, type VoiceRec } from '../lib/voice'
+import { parseVoice, type ParsedVoice } from '../lib/voiceParse'
+import { VoiceListening } from './VoiceListening'
 
 interface Props {
   items: MovItem[]
@@ -43,6 +46,46 @@ export function ExpensesList({
   const [showManage, setShowManage] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
+  const [listening, setListening] = useState(false)
+  const [voiceError, setVoiceError] = useState('')
+  const [voice, setVoice] = useState<ParsedVoice | null>(null)
+  const [transcript, setTranscript] = useState('')
+  const recRef = useRef<VoiceRec | null>(null)
+
+  function startVoiceFlow() {
+    setVoiceError('')
+    if (!isVoiceSupported()) {
+      setVoiceError('Tu navegador no soporta dictado por voz. Probá en Chrome (Android).')
+      return
+    }
+    setListening(true)
+    recRef.current = startVoice(
+      (t) => {
+        setTranscript(t)
+        setVoice(parseVoice(t, { categorias, metodos: MEDIOS_PAGO, fallback: 'Gasto' }))
+        setEditing(null)
+        setShowForm(true)
+        setListening(false)
+      },
+      (m) => {
+        setListening(false)
+        setVoiceError(
+          m === 'no-support'
+            ? 'Tu navegador no soporta dictado por voz. Probá en Chrome (Android).'
+            : m === 'not-allowed' || m === 'service-not-allowed'
+              ? 'Necesito permiso para usar el micrófono.'
+              : 'No te escuché bien, probá de nuevo.',
+        )
+      },
+      () => setListening(false),
+    )
+  }
+
+  function cancelVoice() {
+    recRef.current?.abort()
+    recRef.current = null
+    setListening(false)
+  }
 
   const totals = useMemo(() => {
     let ars = 0
@@ -65,6 +108,8 @@ export function ExpensesList({
     }
     setShowForm(false)
     setEditing(null)
+    setVoice(null)
+    setTranscript('')
     await reload()
     if (wasNew) onSaved?.()
   }
@@ -81,6 +126,7 @@ export function ExpensesList({
 
   return (
     <div className="screen">
+      {listening && <VoiceListening onCancel={cancelVoice} />}
       <div className="stat-row">
         <div className="card stat">
           <span className="stat-label">Gastos en pesos</span>
@@ -99,12 +145,24 @@ export function ExpensesList({
             className="btn-primary btn-red"
             onClick={() => {
               setEditing(null)
+              setVoice(null)
               setShowForm(true)
               setConfirmDelete(null)
             }}
           >
             + Agregar gasto
           </button>
+
+          <button
+            type="button"
+            className={listening ? 'btn-voice listening' : 'btn-voice'}
+            onClick={startVoiceFlow}
+            disabled={listening}
+          >
+            {listening ? '🎤 Escuchando… hablá ahora' : '🎤 Cargar por voz'}
+          </button>
+          {voiceError && <p className="error-msg">{voiceError}</p>}
+
           <button
             type="button"
             className="btn-link manage-link"
@@ -122,17 +180,37 @@ export function ExpensesList({
       )}
 
       {showForm && (
-        <ExpenseForm
-          title={editing ? 'Editar gasto' : 'Nuevo gasto'}
-          submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
-          categorias={categorias}
-          initial={editing ?? undefined}
-          onSubmit={handleSubmit}
-          onCancel={() => {
-            setShowForm(false)
-            setEditing(null)
-          }}
-        />
+        <>
+          {voice && transcript && (
+            <p className="voice-heard">🎤 Escuché: “{transcript}”. Revisá y guardá.</p>
+          )}
+          <ExpenseForm
+            title={voice ? 'Revisá el gasto' : editing ? 'Editar gasto' : 'Nuevo gasto'}
+            submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
+            categorias={categorias}
+            initial={
+              editing ??
+              (voice
+                ? {
+                    description: voice.description,
+                    amount: voice.amount ?? undefined,
+                    currency: voice.currency,
+                    category: voice.category,
+                    payment_method: voice.method,
+                    is_recurring: voice.is_recurring,
+                    date: voice.date,
+                  }
+                : undefined)
+            }
+            onSubmit={handleSubmit}
+            onCancel={() => {
+              setShowForm(false)
+              setEditing(null)
+              setVoice(null)
+              setTranscript('')
+            }}
+          />
+        </>
       )}
 
       <div className="list">
@@ -180,6 +258,7 @@ export function ExpensesList({
                   className="btn-link"
                   onClick={() => {
                     setEditing(it)
+                    setVoice(null)
                     setShowForm(true)
                     setConfirmDelete(null)
                   }}
