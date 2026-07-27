@@ -87,6 +87,18 @@ export interface Investment {
   created_at: string
 }
 
+export interface Reminder {
+  id: string
+  kind: 'cobro' | 'pago'
+  title: string
+  amount: number | null
+  currency: Currency | null
+  due_date: string // YYYY-MM-DD
+  notes: string | null
+  done: boolean
+  created_at: string
+}
+
 export interface SavingsGoal {
   id: string
   name: string

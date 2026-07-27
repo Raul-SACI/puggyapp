@@ -825,6 +825,33 @@ input:focus {
   padding: 0;
 }
 
+/* ---------- Recordatorios ---------- */
+.rem-badge {
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+.rem-overdue {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.rem-today {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.rem-soon {
+  color: var(--primary-dark);
+  background: rgba(20, 184, 166, 0.12);
+}
+
+.rem-done-card {
+  opacity: 0.6;
+}
+
 .item-date {
   font-size: 12px;
   color: var(--text-soft);
@@ -868,14 +895,16 @@ input:focus {
   background: #eef2f4;
   border-radius: 12px;
   padding: 4px;
+  overflow-x: auto;
 }
 
 .subtab {
-  flex: 1;
+  flex: 1 0 auto;
+  white-space: nowrap;
   border: none;
   background: transparent;
   border-radius: 9px;
-  padding: 9px 6px;
+  padding: 9px 12px;
   font-size: 14px;
   font-weight: 700;
   color: var(--text-soft);

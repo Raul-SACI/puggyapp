@@ -5,8 +5,9 @@ import type { Category, Income, IncomeOverride, IncomeSource, InflationRate } fr
 import { IncomesList } from './IncomesList'
 import { IncomesCalendar } from './IncomesCalendar'
 import { IncomesAnalysis } from './IncomesAnalysis'
+import { RemindersView } from './RemindersView'
 
-type SubTab = 'lista' | 'calendario' | 'analisis'
+type SubTab = 'lista' | 'calendario' | 'analisis' | 'recordatorios'
 
 export function IncomesScreen() {
   const [subtab, setSubtab] = useState<SubTab>('lista')
@@ -81,6 +82,9 @@ export function IncomesScreen() {
         <button type="button" className={subtab === 'analisis' ? 'subtab subtab-on' : 'subtab'} onClick={() => setSubtab('analisis')}>
           Análisis
         </button>
+        <button type="button" className={subtab === 'recordatorios' ? 'subtab subtab-on' : 'subtab'} onClick={() => setSubtab('recordatorios')}>
+          Recordatorios
+        </button>
       </div>
 
       {subtab === 'lista' && (
@@ -109,6 +113,7 @@ export function IncomesScreen() {
       {subtab === 'analisis' && (
         <IncomesAnalysis incomes={incomes} overrides={overrides} inflation={inflation} reload={reload} />
       )}
+      {subtab === 'recordatorios' && <RemindersView kind="cobro" />}
     </div>
   )
 }

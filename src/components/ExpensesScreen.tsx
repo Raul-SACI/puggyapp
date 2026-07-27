@@ -6,8 +6,9 @@ import type { MovItem, MovOverride } from '../lib/movements'
 import { ExpensesList } from './ExpensesList'
 import { ExpensesCalendar } from './ExpensesCalendar'
 import { ExpensesAnalysis } from './ExpensesAnalysis'
+import { RemindersView } from './RemindersView'
 
-type SubTab = 'lista' | 'calendario' | 'analisis'
+type SubTab = 'lista' | 'calendario' | 'analisis' | 'recordatorios'
 
 export function ExpensesScreen() {
   const [subtab, setSubtab] = useState<SubTab>('lista')
@@ -98,6 +99,9 @@ export function ExpensesScreen() {
         <button type="button" className={subtab === 'analisis' ? 'subtab subtab-on' : 'subtab'} onClick={() => setSubtab('analisis')}>
           Análisis
         </button>
+        <button type="button" className={subtab === 'recordatorios' ? 'subtab subtab-on' : 'subtab'} onClick={() => setSubtab('recordatorios')}>
+          Recordatorios
+        </button>
       </div>
 
       {subtab === 'lista' && (
@@ -115,6 +119,7 @@ export function ExpensesScreen() {
         <ExpensesCalendar items={items} overrides={overrides} reload={reload} categorias={categorias} />
       )}
       {subtab === 'analisis' && <ExpensesAnalysis items={items} overrides={overrides} />}
+      {subtab === 'recordatorios' && <RemindersView kind="pago" />}
     </div>
   )
 }

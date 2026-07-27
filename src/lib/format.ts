@@ -108,6 +108,15 @@ export function isoDate(y: number, m: number, d: number): string {
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
 
+/** Cantidad de días entre dos fechas YYYY-MM-DD (positivo si 'to' es posterior). */
+export function daysBetween(fromISO: string, toISO: string): number {
+  const a = ymd(fromISO)
+  const b = ymd(toISO)
+  const da = new Date(a.y, a.m - 1, a.d)
+  const db = new Date(b.y, b.m - 1, b.d)
+  return Math.round((db.getTime() - da.getTime()) / 86400000)
+}
+
 /** ¿(ay,am) es anterior o igual a (by,bm)? (meses 1-12) */
 export function monthLte(ay: number, am: number, by: number, bm: number): boolean {
   return ay < by || (ay === by && am <= bm)
