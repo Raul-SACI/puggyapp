@@ -1,7 +1,7 @@
 import { isoDate, todayLocal, ymd } from './format'
 import { monthOccurrences } from './incomes'
 import { monthMovements, type MovItem, type MovOverride } from './movements'
-import type { Account, Income, IncomeOverride } from './types'
+import type { Account, Income, IncomeOverride, Transfer } from './types'
 
 export const TARJETA_TYPE = 'Tarjeta de crédito'
 
@@ -16,6 +16,7 @@ export function accountBalances(
   incomeOverrides: IncomeOverride[],
   expItems: MovItem[],
   expOverrides: MovOverride[],
+  transfers: Transfer[] = [],
 ): Map<string, number> {
   const today = todayLocal()
   const H = ymd(today)
@@ -46,6 +47,13 @@ export function accountBalances(
       if (isoDate(y, m, o.day) > today) continue
       net.set(o.account_id, (net.get(o.account_id) ?? 0) - o.amount)
     }
+  }
+
+  // Transferencias: sale de una cuenta, entra en otra (hasta hoy).
+  for (const t of transfers) {
+    if (t.transfer_date > today) continue
+    net.set(t.from_account, (net.get(t.from_account) ?? 0) - t.amount)
+    net.set(t.to_account, (net.get(t.to_account) ?? 0) + t.amount)
   }
 
   const balances = new Map<string, number>()

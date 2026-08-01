@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { formatMoney, type Currency } from '../lib/format'
+import { formatDateLocal, formatMoney, type Currency } from '../lib/format'
 import { accountBalances } from '../lib/balances'
 import type { MovItem, MovOverride } from '../lib/movements'
-import type { Account, Expense, ExpenseOverride, Income, IncomeOverride } from '../lib/types'
+import type {
+  Account,
+  Expense,
+  ExpenseOverride,
+  Income,
+  IncomeOverride,
+  Transfer,
+} from '../lib/types'
 import { AccountForm, TARJETA, type AccountFormValues } from './AccountForm'
+import { TransferForm, type TransferFormValues } from './TransferForm'
 
 function tipoIcon(type: string): string {
   if (type === 'Efectivo') return '💵'
@@ -14,28 +22,35 @@ function tipoIcon(type: string): string {
   return '👛'
 }
 
+type Mode = 'none' | 'account' | 'transfer'
+
 export function AccountsScreen() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [incomes, setIncomes] = useState<Income[]>([])
   const [incomeOv, setIncomeOv] = useState<IncomeOverride[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [expenseOv, setExpenseOv] = useState<ExpenseOverride[]>([])
+  const [transfers, setTransfers] = useState<Transfer[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [showForm, setShowForm] = useState(false)
+
+  const [mode, setMode] = useState<Mode>('none')
   const [editing, setEditing] = useState<Account | null>(null)
+  const [transferTo, setTransferTo] = useState<string | undefined>(undefined)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [confirmDelTr, setConfirmDelTr] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
 
   const reload = useCallback(async () => {
     setLoading(true)
     setError('')
-    const [acc, inc, incOv, exp, expOv] = await Promise.all([
+    const [acc, inc, incOv, exp, expOv, tr] = await Promise.all([
       supabase.from('accounts').select('*').order('created_at', { ascending: true }).range(0, 999),
       supabase.from('incomes').select('*').range(0, 999),
       supabase.from('income_overrides').select('*').range(0, 999),
       supabase.from('expenses').select('*').range(0, 999),
       supabase.from('expense_overrides').select('*').range(0, 999),
+      supabase.from('transfers').select('*').order('transfer_date', { ascending: false }).range(0, 999),
     ])
     if (acc.error) setError(acc.error.message)
     else setAccounts((acc.data ?? []) as Account[])
@@ -43,6 +58,7 @@ export function AccountsScreen() {
     setIncomeOv(incOv.error ? [] : ((incOv.data ?? []) as IncomeOverride[]))
     setExpenses(exp.error ? [] : ((exp.data ?? []) as Expense[]))
     setExpenseOv(expOv.error ? [] : ((expOv.data ?? []) as ExpenseOverride[]))
+    setTransfers(tr.error ? [] : ((tr.data ?? []) as Transfer[]))
     setLoading(false)
   }, [])
 
@@ -73,8 +89,8 @@ export function AccountsScreen() {
       payment_method: o.payment_method,
       override_date: o.override_date,
     }))
-    return accountBalances(accounts, incomes, incomeOv, expItems, expOverrides)
-  }, [accounts, incomes, incomeOv, expenses, expenseOv])
+    return accountBalances(accounts, incomes, incomeOv, expItems, expOverrides, transfers)
+  }, [accounts, incomes, incomeOv, expenses, expenseOv, transfers])
 
   const totals = useMemo(() => {
     const have: Record<Currency, number> = { ARS: 0, USD: 0 }
@@ -87,7 +103,9 @@ export function AccountsScreen() {
     return { have, owe }
   }, [accounts, balances])
 
-  async function handleSubmit(values: AccountFormValues) {
+  const accName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—'
+
+  async function handleAccountSubmit(values: AccountFormValues) {
     if (editing) {
       const { error } = await supabase.from('accounts').update(values).eq('id', editing.id)
       if (error) throw error
@@ -95,17 +113,35 @@ export function AccountsScreen() {
       const { error } = await supabase.from('accounts').insert(values)
       if (error) throw error
     }
-    setShowForm(false)
+    setMode('none')
     setEditing(null)
     await reload()
   }
 
-  async function handleDelete(id: string) {
+  async function handleTransferSubmit(values: TransferFormValues) {
+    const { error } = await supabase.from('transfers').insert(values)
+    if (error) throw error
+    setMode('none')
+    setTransferTo(undefined)
+    await reload()
+  }
+
+  async function handleDeleteAccount(id: string) {
     setActionError('')
     const { error } = await supabase.from('accounts').delete().eq('id', id)
     if (error) setActionError(error.message)
     else {
       setConfirmDelete(null)
+      await reload()
+    }
+  }
+
+  async function handleDeleteTransfer(id: string) {
+    setActionError('')
+    const { error } = await supabase.from('transfers').delete().eq('id', id)
+    if (error) setActionError(error.message)
+    else {
+      setConfirmDelTr(null)
       await reload()
     }
   }
@@ -134,29 +170,53 @@ export function AccountsScreen() {
         </div>
       ))}
 
-      {!showForm && (
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={() => {
-            setEditing(null)
-            setShowForm(true)
-            setConfirmDelete(null)
-          }}
-        >
-          + Nueva cuenta
-        </button>
+      {mode === 'none' && (
+        <div className="btn-pair">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              setEditing(null)
+              setMode('account')
+              setConfirmDelete(null)
+            }}
+          >
+            + Nueva cuenta
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              setTransferTo(undefined)
+              setMode('transfer')
+            }}
+          >
+            ↔ Transferir
+          </button>
+        </div>
       )}
 
-      {showForm && (
+      {mode === 'account' && (
         <AccountForm
           title={editing ? 'Editar cuenta' : 'Nueva cuenta'}
           submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
           initial={editing ?? undefined}
-          onSubmit={handleSubmit}
+          onSubmit={handleAccountSubmit}
           onCancel={() => {
-            setShowForm(false)
+            setMode('none')
             setEditing(null)
+          }}
+        />
+      )}
+
+      {mode === 'transfer' && (
+        <TransferForm
+          cuentas={accounts}
+          initialTo={transferTo}
+          onSubmit={handleTransferSubmit}
+          onCancel={() => {
+            setMode('none')
+            setTransferTo(undefined)
           }}
         />
       )}
@@ -199,7 +259,7 @@ export function AccountsScreen() {
               {confirmDelete === a.id ? (
                 <div className="confirm">
                   <span>¿Borrar?</span>
-                  <button type="button" className="btn-danger btn-small" onClick={() => handleDelete(a.id)}>
+                  <button type="button" className="btn-danger btn-small" onClick={() => handleDeleteAccount(a.id)}>
                     Sí
                   </button>
                   <button type="button" className="btn-secondary btn-small" onClick={() => setConfirmDelete(null)}>
@@ -208,12 +268,24 @@ export function AccountsScreen() {
                 </div>
               ) : (
                 <div className="item-actions">
+                  {esTarjeta && bal > 0 && mode === 'none' && (
+                    <button
+                      type="button"
+                      className="btn-link"
+                      onClick={() => {
+                        setTransferTo(a.id)
+                        setMode('transfer')
+                      }}
+                    >
+                      Pagar
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="btn-link"
                     onClick={() => {
                       setEditing(a)
-                      setShowForm(true)
+                      setMode('account')
                       setConfirmDelete(null)
                     }}
                   >
@@ -232,6 +304,49 @@ export function AccountsScreen() {
           )
         })}
       </div>
+
+      {transfers.length > 0 && (
+        <div className="list">
+          <h3 className="list-title">Movimientos entre cuentas</h3>
+          {transfers.map((t) => {
+            const esPago = accounts.find((a) => a.id === t.to_account)?.type === TARJETA
+            return (
+              <div key={t.id} className="card item">
+                <div className="item-main">
+                  <div className="item-top">
+                    <span className="item-desc">
+                      {accName(t.from_account)} → {esPago ? '💳 ' : ''}{accName(t.to_account)}
+                    </span>
+                    <span className="item-amount">{formatMoney(t.amount, t.currency)}</span>
+                  </div>
+                  <div className="item-meta">
+                    {esPago && <span className="tag tag-recur">Pago de tarjeta</span>}
+                    <span className="item-date">{formatDateLocal(t.transfer_date)}</span>
+                    {t.notes && <span className="muted-inline">· {t.notes}</span>}
+                  </div>
+                </div>
+                {confirmDelTr === t.id ? (
+                  <div className="confirm">
+                    <span>¿Borrar?</span>
+                    <button type="button" className="btn-danger btn-small" onClick={() => handleDeleteTransfer(t.id)}>
+                      Sí
+                    </button>
+                    <button type="button" className="btn-secondary btn-small" onClick={() => setConfirmDelTr(null)}>
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <div className="item-actions">
+                    <button type="button" className="btn-link btn-link-danger" onClick={() => setConfirmDelTr(t.id)}>
+                      Borrar
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

@@ -98,6 +98,17 @@ export interface Account {
   created_at: string
 }
 
+export interface Transfer {
+  id: string
+  from_account: string
+  to_account: string
+  amount: number
+  currency: Currency
+  transfer_date: string // YYYY-MM-DD
+  notes: string | null
+  created_at: string
+}
+
 export interface Reminder {
   id: string
   kind: 'cobro' | 'pago'
