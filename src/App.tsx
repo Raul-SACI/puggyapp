@@ -1,4 +1,5 @@
 import { useAuth } from './lib/AuthContext'
+import { OnboardingProvider } from './lib/OnboardingContext'
 import { AuthScreen } from './components/AuthScreen'
 import { AppShell } from './components/AppShell'
 
@@ -13,5 +14,11 @@ export default function App() {
     )
   }
 
-  return session ? <AppShell /> : <AuthScreen />
+  return session ? (
+    <OnboardingProvider>
+      <AppShell />
+    </OnboardingProvider>
+  ) : (
+    <AuthScreen />
+  )
 }

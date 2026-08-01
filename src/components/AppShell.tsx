@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
+import { useOnboarding } from '../lib/OnboardingContext'
 import { PiggyMascot } from './PiggyMascot'
+import { WelcomeTour } from './WelcomeTour'
 import { DashboardScreen } from './DashboardScreen'
 import { IncomesScreen } from './IncomesScreen'
 import { ExpensesScreen } from './ExpensesScreen'
@@ -12,20 +14,33 @@ type Tab = 'dashboard' | 'ingresos' | 'gastos' | 'cuentas' | 'inversiones' | 'ob
 
 export function AppShell() {
   const { signOut } = useAuth()
+  const { restartTour } = useOnboarding()
   const [tab, setTab] = useState<Tab>('dashboard')
 
   const mascot = tab === 'gastos' ? 'sad' : tab === 'inversiones' ? 'invest' : 'coins'
 
   return (
     <div className="app-shell">
+      <WelcomeTour />
       <header className="topbar">
         <span className="topbar-brand">
           <PiggyMascot variant={mascot} size={44} />
           Puggy
         </span>
-        <button type="button" className="btn-ghost" onClick={signOut}>
-          Salir
-        </button>
+        <div className="topbar-actions">
+          <button
+            type="button"
+            className="btn-help"
+            onClick={restartTour}
+            aria-label="Ver la guía otra vez"
+            title="Ver la guía"
+          >
+            ?
+          </button>
+          <button type="button" className="btn-ghost" onClick={signOut}>
+            Salir
+          </button>
+        </div>
       </header>
 
       <main className="app-main">

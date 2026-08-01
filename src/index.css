@@ -251,6 +251,129 @@ input:focus {
   background: #f8fafc;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-help {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--primary-dark);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  flex: none;
+}
+
+.btn-help:hover {
+  background: #f8fafc;
+}
+
+/* ---------- Onboarding: tour de bienvenida ---------- */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: celebfade 0.25s ease;
+}
+
+.tour-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--card);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 26px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  animation: celebpop 0.3s ease;
+}
+
+.tour-icon {
+  font-size: 52px;
+  line-height: 1;
+}
+
+.tour-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.tour-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.tour-dots {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 2px;
+}
+
+.tour-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.tour-dot-on {
+  background: var(--primary);
+}
+
+.tour-actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.tour-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.tour-btn {
+  width: auto;
+  margin-top: 0;
+  padding: 11px 18px;
+}
+
+.tour-skip {
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.tour-skip:hover {
+  color: var(--text);
+}
+
 .home-main {
   flex: 1;
   padding: 20px;
