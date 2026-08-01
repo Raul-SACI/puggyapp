@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatDateLocal, formatMoney, type Currency } from '../lib/format'
-import { accountBalances } from '../lib/balances'
+import {
+  accountBalances,
+  isDebtType,
+  PRESTAMO_ACTIVO,
+  PRESTAMO_DEUDA,
+  TARJETA_TYPE,
+} from '../lib/balances'
 import type { MovItem, MovOverride } from '../lib/movements'
 import type {
   Account,
@@ -11,7 +17,7 @@ import type {
   IncomeOverride,
   Transfer,
 } from '../lib/types'
-import { AccountForm, TARJETA, type AccountFormValues } from './AccountForm'
+import { AccountForm, type AccountFormValues } from './AccountForm'
 import { TransferForm, type TransferFormValues } from './TransferForm'
 import { CoachMark } from './CoachMark'
 
@@ -19,7 +25,9 @@ function tipoIcon(type: string): string {
   if (type === 'Efectivo') return '💵'
   if (type === 'Banco') return '🏦'
   if (type === 'Billetera virtual') return '📱'
-  if (type === TARJETA) return '💳'
+  if (type === TARJETA_TYPE) return '💳'
+  if (type === PRESTAMO_DEUDA) return '💸'
+  if (type === PRESTAMO_ACTIVO) return '🤝'
   return '👛'
 }
 
@@ -98,7 +106,7 @@ export function AccountsScreen() {
     const owe: Record<Currency, number> = { ARS: 0, USD: 0 }
     for (const a of accounts) {
       const bal = balances.get(a.id) ?? a.opening_balance
-      if (a.type === TARJETA) owe[a.currency] += bal
+      if (isDebtType(a.type)) owe[a.currency] += bal
       else have[a.currency] += bal
     }
     return { have, owe }
@@ -163,7 +171,7 @@ export function AccountsScreen() {
             </div>
             {totals.owe[c] > 0 && (
               <div className="inv-row">
-                <span>Debés (tarjetas)</span>
+                <span>Debés (tarjetas y préstamos)</span>
                 <span className="inv-val rend-down">{formatMoney(totals.owe[c], c)}</span>
               </div>
             )}
@@ -243,7 +251,7 @@ export function AccountsScreen() {
         )}
 
         {accounts.map((a) => {
-          const esTarjeta = a.type === TARJETA
+          const esDeuda = isDebtType(a.type)
           const bal = balances.get(a.id) ?? a.opening_balance
           return (
             <div key={a.id} className="card item">
@@ -252,14 +260,15 @@ export function AccountsScreen() {
                   <span className="item-desc">
                     {tipoIcon(a.type)} {a.name}
                   </span>
-                  <span className={esTarjeta ? 'item-amount rend-down' : 'item-amount rend-up'}>
+                  <span className={esDeuda ? 'item-amount rend-down' : 'item-amount rend-up'}>
                     {formatMoney(bal, a.currency)}
                   </span>
                 </div>
                 <div className="item-meta">
                   <span className="tag">{a.type}</span>
                   <span className="tag tag-pay">{a.currency}</span>
-                  {esTarjeta && <span className="muted-inline">deuda</span>}
+                  {esDeuda && <span className="muted-inline">deuda</span>}
+                  {a.type === PRESTAMO_ACTIVO && <span className="muted-inline">te deben</span>}
                 </div>
               </div>
 
@@ -275,7 +284,7 @@ export function AccountsScreen() {
                 </div>
               ) : (
                 <div className="item-actions">
-                  {esTarjeta && bal > 0 && mode === 'none' && (
+                  {esDeuda && bal > 0 && mode === 'none' && (
                     <button
                       type="button"
                       className="btn-link"
@@ -316,18 +325,21 @@ export function AccountsScreen() {
         <div className="list">
           <h3 className="list-title">Movimientos entre cuentas</h3>
           {transfers.map((t) => {
-            const esPago = accounts.find((a) => a.id === t.to_account)?.type === TARJETA
+            const destinoTipo = accounts.find((a) => a.id === t.to_account)?.type ?? ''
+            const esPago = isDebtType(destinoTipo)
+            const pagoLabel = destinoTipo === TARJETA_TYPE ? 'Pago de tarjeta' : 'Pago de préstamo'
             return (
               <div key={t.id} className="card item">
                 <div className="item-main">
                   <div className="item-top">
                     <span className="item-desc">
-                      {accName(t.from_account)} → {esPago ? '💳 ' : ''}{accName(t.to_account)}
+                      {accName(t.from_account)} → {esPago ? `${tipoIcon(destinoTipo)} ` : ''}
+                      {accName(t.to_account)}
                     </span>
                     <span className="item-amount">{formatMoney(t.amount, t.currency)}</span>
                   </div>
                   <div className="item-meta">
-                    {esPago && <span className="tag tag-recur">Pago de tarjeta</span>}
+                    {esPago && <span className="tag tag-recur">{pagoLabel}</span>}
                     <span className="item-date">{formatDateLocal(t.transfer_date)}</span>
                     {t.notes && <span className="muted-inline">· {t.notes}</span>}
                   </div>

@@ -14,7 +14,7 @@ import {
 } from '../lib/format'
 import { monthOccurrences, sumByCurrency } from '../lib/incomes'
 import { monthMovements, sumCur, type MovItem, type MovOverride } from '../lib/movements'
-import { accountBalances, TARJETA_TYPE } from '../lib/balances'
+import { accountBalances, isDebtType, PRESTAMO_ACTIVO, PRESTAMO_DEUDA } from '../lib/balances'
 import { CoachMark } from './CoachMark'
 import type {
   Account,
@@ -31,7 +31,9 @@ function tipoIcon(type: string): string {
   if (type === 'Efectivo') return '💵'
   if (type === 'Banco') return '🏦'
   if (type === 'Billetera virtual') return '📱'
-  if (type === TARJETA_TYPE) return '💳'
+  if (type === 'Tarjeta de crédito') return '💳'
+  if (type === PRESTAMO_DEUDA) return '💸'
+  if (type === PRESTAMO_ACTIVO) return '🤝'
   return '👛'
 }
 
@@ -128,14 +130,14 @@ export function DashboardScreen() {
   const patrimonio = useMemo(() => {
     let activos = 0
     let deudas = 0
-    const cuentas: { id: string; name: string; type: string; bal: number; esTarjeta: boolean }[] = []
+    const cuentas: { id: string; name: string; type: string; bal: number; esDeuda: boolean }[] = []
     for (const a of accounts) {
       if (a.currency !== currency) continue
       const bal = balances.get(a.id) ?? a.opening_balance
-      const esTarjeta = a.type === TARJETA_TYPE
-      if (esTarjeta) deudas += bal
+      const esDeuda = isDebtType(a.type)
+      if (esDeuda) deudas += bal
       else activos += bal
-      cuentas.push({ id: a.id, name: a.name, type: a.type, bal, esTarjeta })
+      cuentas.push({ id: a.id, name: a.name, type: a.type, bal, esDeuda })
     }
     return { activos, deudas, neto: activos - deudas, cuentas, has: cuentas.length > 0 }
   }, [accounts, balances, currency])
@@ -291,7 +293,7 @@ export function DashboardScreen() {
                 </div>
                 {patrimonio.deudas > 0 && (
                   <div className="inv-row">
-                    <span>Debés (tarjetas)</span>
+                    <span>Debés (tarjetas y préstamos)</span>
                     <span className="inv-val rend-down">{formatMoney(patrimonio.deudas, currency)}</span>
                   </div>
                 )}
@@ -305,7 +307,7 @@ export function DashboardScreen() {
                 {patrimonio.cuentas.map((c) => (
                   <div className="inv-row" key={c.id}>
                     <span>{tipoIcon(c.type)} {c.name}</span>
-                    <span className={c.esTarjeta ? 'inv-val rend-down' : 'inv-val rend-up'}>
+                    <span className={c.esDeuda ? 'inv-val rend-down' : 'inv-val rend-up'}>
                       {formatMoney(c.bal, currency)}
                     </span>
                   </div>

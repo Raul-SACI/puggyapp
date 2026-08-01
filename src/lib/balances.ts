@@ -4,6 +4,13 @@ import { monthMovements, type MovItem, type MovOverride } from './movements'
 import type { Account, Income, IncomeOverride, Transfer } from './types'
 
 export const TARJETA_TYPE = 'Tarjeta de crédito'
+export const PRESTAMO_DEUDA = 'Préstamo adquirido' // vos debés (deuda)
+export const PRESTAMO_ACTIVO = 'Préstamo otorgado' // te deben (activo)
+
+/** Tipos de cuenta que representan una deuda (restan del patrimonio). */
+export function isDebtType(type: string): boolean {
+  return type === TARJETA_TYPE || type === PRESTAMO_DEUDA
+}
 
 /**
  * Calcula el saldo actual de cada cuenta:
@@ -59,7 +66,7 @@ export function accountBalances(
   const balances = new Map<string, number>()
   for (const a of accounts) {
     const n = net.get(a.id) ?? 0
-    balances.set(a.id, a.type === TARJETA_TYPE ? a.opening_balance - n : a.opening_balance + n)
+    balances.set(a.id, isDebtType(a.type) ? a.opening_balance - n : a.opening_balance + n)
   }
   return balances
 }

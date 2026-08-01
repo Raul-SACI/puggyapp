@@ -1,7 +1,16 @@
 import { useState, type FormEvent } from 'react'
 import { parseMoney, type Currency } from '../lib/format'
+import { PRESTAMO_ACTIVO, PRESTAMO_DEUDA, isDebtType } from '../lib/balances'
 
-export const TIPOS_CUENTA = ['Efectivo', 'Banco', 'Billetera virtual', 'Tarjeta de crédito', 'Otro']
+export const TIPOS_CUENTA = [
+  'Efectivo',
+  'Banco',
+  'Billetera virtual',
+  'Tarjeta de crédito',
+  'Préstamo adquirido',
+  'Préstamo otorgado',
+  'Otro',
+]
 
 export const TARJETA = 'Tarjeta de crédito'
 
@@ -38,6 +47,9 @@ export function AccountForm({ title, submitLabel, initial, onSubmit, onCancel }:
   const [error, setError] = useState('')
 
   const esTarjeta = type === TARJETA
+  const esPrestamoDeuda = type === PRESTAMO_DEUDA
+  const esPrestamoActivo = type === PRESTAMO_ACTIVO
+  const esDeuda = isDebtType(type)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -110,7 +122,11 @@ export function AccountForm({ title, submitLabel, initial, onSubmit, onCancel }:
 
       <label className="field">
         <span className="field-label">
-          {esTarjeta ? 'Deuda actual (lo que debés hoy)' : 'Saldo inicial (lo que tenés hoy)'}
+          {esDeuda
+            ? 'Deuda actual (lo que debés hoy)'
+            : esPrestamoActivo
+              ? 'Cuánto te deben hoy'
+              : 'Saldo inicial (lo que tenés hoy)'}
         </span>
         <input
           type="text"
@@ -125,6 +141,20 @@ export function AccountForm({ title, submitLabel, initial, onSubmit, onCancel }:
         <div className="tip-inline">
           💳 En la tarjeta, este número es tu <b>deuda</b>. Las compras la suman; cuando la pagás
           (con una transferencia), baja.
+        </div>
+      )}
+
+      {esPrestamoDeuda && (
+        <div className="tip-inline">
+          💸 Es un préstamo que <b>vos debés</b>. Poné cuánto te falta pagar hoy. Cada cuota que
+          pagás (con una transferencia desde tu banco o efectivo) va bajando la deuda.
+        </div>
+      )}
+
+      {esPrestamoActivo && (
+        <div className="tip-inline">
+          🤝 Es un préstamo que <b>te deben</b>. Poné cuánto te tienen que devolver hoy. Suma a tu
+          patrimonio; cuando te pagan, transferís de esta cuenta a tu efectivo o banco.
         </div>
       )}
 

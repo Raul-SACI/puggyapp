@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { parseMoney, todayLocal, type Currency } from '../lib/format'
 import type { Account } from '../lib/types'
-import { TARJETA } from './AccountForm'
+import { isDebtType, TARJETA_TYPE } from '../lib/balances'
 
 export interface TransferFormValues {
   from_account: string
@@ -36,7 +36,8 @@ export function TransferForm({ cuentas, initialTo, onSubmit, onCancel }: Props) 
   const origenes = cuentas.filter((c) => c.currency === currency)
   const destinos = cuentas.filter((c) => c.currency === effCurrency && c.id !== from)
   const destinoAcc = cuentas.find((c) => c.id === to)
-  const esPagoTarjeta = destinoAcc?.type === TARJETA
+  const esPagoDeuda = destinoAcc ? isDebtType(destinoAcc.type) : false
+  const esPagoTarjeta = destinoAcc?.type === TARJETA_TYPE
 
   function pickCurrency(c: Currency) {
     setCurrency(c)
@@ -82,7 +83,13 @@ export function TransferForm({ cuentas, initialTo, onSubmit, onCancel }: Props) 
 
   return (
     <form onSubmit={handleSubmit} className="card form">
-      <h3 className="form-title">{esPagoTarjeta ? 'Pagar tarjeta' : 'Transferir entre cuentas'}</h3>
+      <h3 className="form-title">
+        {esPagoDeuda
+          ? esPagoTarjeta
+            ? 'Pagar tarjeta'
+            : 'Pagar préstamo'
+          : 'Transferir entre cuentas'}
+      </h3>
 
       <div className="field">
         <span className="field-label">Moneda</span>
@@ -119,7 +126,7 @@ export function TransferForm({ cuentas, initialTo, onSubmit, onCancel }: Props) 
           <div className="chips">
             {destinos.map((c) => (
               <button type="button" key={c.id} className={to === c.id ? 'chip chip-active' : 'chip'} onClick={() => setTo(to === c.id ? '' : c.id)}>
-                {c.type === TARJETA ? `💳 ${c.name}` : c.name}
+                {isDebtType(c.type) ? `${c.type === TARJETA_TYPE ? '💳' : '💸'} ${c.name}` : c.name}
               </button>
             ))}
           </div>
@@ -141,10 +148,11 @@ export function TransferForm({ cuentas, initialTo, onSubmit, onCancel }: Props) 
         <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej: pago resumen tarjeta" />
       </label>
 
-      {esPagoTarjeta && (
+      {esPagoDeuda && (
         <div className="tip-inline">
-          💳 Estás <b>pagando tu tarjeta</b>: baja la deuda y baja el saldo de la cuenta con la que
-          pagás. No es un gasto nuevo. 👍
+          {esPagoTarjeta ? '💳' : '💸'} Estás{' '}
+          <b>{esPagoTarjeta ? 'pagando tu tarjeta' : 'pagando tu préstamo'}</b>: baja la deuda y baja
+          el saldo de la cuenta con la que pagás. No es un gasto nuevo. 👍
         </div>
       )}
 
