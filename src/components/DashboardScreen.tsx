@@ -14,14 +14,25 @@ import {
 } from '../lib/format'
 import { monthOccurrences, sumByCurrency } from '../lib/incomes'
 import { monthMovements, sumCur, type MovItem, type MovOverride } from '../lib/movements'
+import { accountBalances, TARJETA_TYPE } from '../lib/balances'
 import type {
+  Account,
   Expense,
   ExpenseOverride,
   Income,
   IncomeOverride,
   Investment,
   SavingsGoal,
+  Transfer,
 } from '../lib/types'
+
+function tipoIcon(type: string): string {
+  if (type === 'Efectivo') return '💵'
+  if (type === 'Banco') return '🏦'
+  if (type === 'Billetera virtual') return '📱'
+  if (type === TARJETA_TYPE) return '💳'
+  return '👛'
+}
 
 type Mode = 'mes' | 'anio'
 interface Row {
@@ -43,11 +54,13 @@ export function DashboardScreen() {
   const [expenseOv, setExpenseOv] = useState<ExpenseOverride[]>([])
   const [investments, setInvestments] = useState<Investment[]>([])
   const [goals, setGoals] = useState<SavingsGoal[]>([])
+  const [accounts, setAccounts] = useState<Account[]>([])
+  const [transfers, setTransfers] = useState<Transfer[]>([])
   const [loading, setLoading] = useState(true)
 
   const reload = useCallback(async () => {
     setLoading(true)
-    const [prof, inc, incOv, exp, expOv, invs, gls] = await Promise.all([
+    const [prof, inc, incOv, exp, expOv, invs, gls, acc, tr] = await Promise.all([
       user ? supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
       supabase.from('incomes').select('*').range(0, 999),
       supabase.from('income_overrides').select('*').range(0, 999),
@@ -55,6 +68,8 @@ export function DashboardScreen() {
       supabase.from('expense_overrides').select('*').range(0, 999),
       supabase.from('investments').select('*').range(0, 999),
       supabase.from('savings_goals').select('*').range(0, 999),
+      supabase.from('accounts').select('*').order('created_at', { ascending: true }).range(0, 999),
+      supabase.from('transfers').select('*').range(0, 999),
     ])
     setName((prof.data?.display_name as string) || (user?.email?.split('@')[0] ?? 'amig@'))
     setIncomes(inc.error ? [] : ((inc.data ?? []) as Income[]))
@@ -63,6 +78,8 @@ export function DashboardScreen() {
     setExpenseOv(expOv.error ? [] : ((expOv.data ?? []) as ExpenseOverride[]))
     setInvestments(invs.error ? [] : ((invs.data ?? []) as Investment[]))
     setGoals(gls.error ? [] : ((gls.data ?? []) as SavingsGoal[]))
+    setAccounts(acc.error ? [] : ((acc.data ?? []) as Account[]))
+    setTransfers(tr.error ? [] : ((tr.data ?? []) as Transfer[]))
     setLoading(false)
   }, [user])
 
@@ -101,6 +118,26 @@ export function DashboardScreen() {
       })),
     [expenseOv],
   )
+
+  // -------- Patrimonio (foto de HOY, según la moneda elegida) --------
+  const balances = useMemo(
+    () => accountBalances(accounts, incomes, incomeOv, expItems, expOverrides, transfers),
+    [accounts, incomes, incomeOv, expItems, expOverrides, transfers],
+  )
+  const patrimonio = useMemo(() => {
+    let activos = 0
+    let deudas = 0
+    const cuentas: { id: string; name: string; type: string; bal: number; esTarjeta: boolean }[] = []
+    for (const a of accounts) {
+      if (a.currency !== currency) continue
+      const bal = balances.get(a.id) ?? a.opening_balance
+      const esTarjeta = a.type === TARJETA_TYPE
+      if (esTarjeta) deudas += bal
+      else activos += bal
+      cuentas.push({ id: a.id, name: a.name, type: a.type, bal, esTarjeta })
+    }
+    return { activos, deudas, neto: activos - deudas, cuentas, has: cuentas.length > 0 }
+  }, [accounts, balances, currency])
 
   // -------- Vista mensual --------
   const mData = useMemo(() => {
@@ -231,7 +268,46 @@ export function DashboardScreen() {
 
       {loading ? (
         <p className="muted">Cargando tu información…</p>
-      ) : mode === 'mes' ? (
+      ) : (
+       <>
+        {patrimonio.has && (
+          <>
+            <div className="card total-card">
+              <span className="stat-label">Tu patrimonio en {currency === 'ARS' ? 'pesos' : 'dólares'} · hoy</span>
+              <span className={patrimonio.neto >= 0 ? 'total-big rend-up' : 'total-big rend-down'}>
+                {formatMoney(patrimonio.neto, currency)}
+              </span>
+              <div className="inv-rows">
+                <div className="inv-row">
+                  <span>Tenés (activos)</span>
+                  <span className="inv-val rend-up">{formatMoney(patrimonio.activos, currency)}</span>
+                </div>
+                {patrimonio.deudas > 0 && (
+                  <div className="inv-row">
+                    <span>Debés (tarjetas)</span>
+                    <span className="inv-val rend-down">{formatMoney(patrimonio.deudas, currency)}</span>
+                  </div>
+                )}
+              </div>
+              <span className="muted">Activos menos deudas de tarjeta, al día de hoy.</span>
+            </div>
+
+            <div className="card chart-card">
+              <h3 className="chart-title">Saldo por cuenta</h3>
+              <div className="inv-rows">
+                {patrimonio.cuentas.map((c) => (
+                  <div className="inv-row" key={c.id}>
+                    <span>{tipoIcon(c.type)} {c.name}</span>
+                    <span className={c.esTarjeta ? 'inv-val rend-down' : 'inv-val rend-up'}>
+                      {formatMoney(c.bal, currency)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+        {mode === 'mes' ? (
         <>
           <div className="card total-card">
             <span className="stat-label">Balance del mes</span>
@@ -364,6 +440,8 @@ export function DashboardScreen() {
             <Hbars data={yData.catExp} />
           </div>
         </>
+        )}
+       </>
       )}
     </div>
   )
