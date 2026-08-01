@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { DEFAULT_INCOME_CATEGORIES } from '../lib/defaults'
-import type { Category, Income, IncomeOverride, IncomeSource, InflationRate } from '../lib/types'
+import type { Account, Category, Income, IncomeOverride, IncomeSource, InflationRate } from '../lib/types'
 import { IncomesList } from './IncomesList'
 import { IncomesCalendar } from './IncomesCalendar'
 import { IncomesAnalysis } from './IncomesAnalysis'
@@ -17,6 +17,7 @@ export function IncomesScreen() {
   const [inflation, setInflation] = useState<InflationRate[]>([])
   const [categorias, setCategorias] = useState<string[]>([])
   const [fuentes, setFuentes] = useState<string[]>([])
+  const [cuentas, setCuentas] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [celebrate, setCelebrate] = useState(false)
@@ -24,12 +25,13 @@ export function IncomesScreen() {
   const reload = useCallback(async () => {
     setLoading(true)
     setError('')
-    const [incRes, ovRes, inflRes, catRes, srcRes] = await Promise.all([
+    const [incRes, ovRes, inflRes, catRes, srcRes, acctRes] = await Promise.all([
       supabase.from('incomes').select('*').order('income_date', { ascending: false }).order('created_at', { ascending: false }).range(0, 999),
       supabase.from('income_overrides').select('*').range(0, 999),
       supabase.from('inflation_rates').select('*').range(0, 999),
       supabase.from('categories').select('*').eq('kind', 'income').range(0, 999),
       supabase.from('income_sources').select('*').order('name').range(0, 999),
+      supabase.from('accounts').select('*').order('created_at').range(0, 999),
     ])
 
     if (incRes.error) setError(incRes.error.message)
@@ -47,6 +49,7 @@ export function IncomesScreen() {
     }
     setCategorias(cats)
     setFuentes(srcRes.error ? [] : (srcRes.data as IncomeSource[]).map((s) => s.name))
+    setCuentas(acctRes.error ? [] : ((acctRes.data ?? []) as Account[]))
 
     setLoading(false)
   }, [])
@@ -102,6 +105,7 @@ export function IncomesScreen() {
           onDeleteCategoria={deleteCategoria}
           onAddFuente={addFuente}
           onDeleteFuente={deleteFuente}
+          cuentas={cuentas}
           onSaved={() => setCelebrate(true)}
         />
       )}
@@ -112,6 +116,7 @@ export function IncomesScreen() {
           reload={reload}
           categorias={categorias}
           fuentes={fuentes}
+          cuentas={cuentas}
           onSaved={() => setCelebrate(true)}
         />
       )}

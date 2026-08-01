@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { parseMoney, todayLocal, type Currency } from '../lib/format'
+import type { Account } from '../lib/types'
 
 export const MEDIOS_COBRO = [
   'Efectivo',
@@ -16,6 +17,7 @@ export interface IncomeFormValues {
   category: string | null
   source: string | null
   collection_method: string | null
+  account_id: string | null
   is_initial: boolean
   is_recurring: boolean
   income_date: string
@@ -27,7 +29,7 @@ interface Initial {
   currency?: Currency
   category?: string | null
   source?: string | null
-  collection_method?: string | null
+  account_id?: string | null
   is_initial?: boolean
   is_recurring?: boolean
   income_date?: string
@@ -38,6 +40,7 @@ interface Props {
   submitLabel: string
   categorias: string[]
   fuentes: string[]
+  cuentas: Account[]
   initial?: Initial
   showRecurring?: boolean
   showInitial?: boolean
@@ -45,7 +48,6 @@ interface Props {
   onCancel: () => void
 }
 
-/** Mete el valor inicial en la lista si no está (para poder mostrarlo seleccionado). */
 function withInitial(list: string[], value?: string | null): string[] {
   if (value && !list.includes(value)) return [value, ...list]
   return list
@@ -56,6 +58,7 @@ export function IncomeForm({
   submitLabel,
   categorias,
   fuentes,
+  cuentas,
   initial,
   showRecurring = true,
   showInitial = true,
@@ -72,17 +75,25 @@ export function IncomeForm({
   const [currency, setCurrency] = useState<Currency>(initial?.currency ?? 'ARS')
   const [category, setCategory] = useState<string>(initial?.category ?? '')
   const [source, setSource] = useState<string>(initial?.source ?? '')
-  const [collection, setCollection] = useState<string>(initial?.collection_method ?? '')
+  const [accountId, setAccountId] = useState<string>(initial?.account_id ?? '')
   const [isInitial, setIsInitial] = useState(initial?.is_initial ?? false)
   const [isRecurring, setIsRecurring] = useState(initial?.is_recurring ?? false)
   const [date, setDate] = useState(initial?.income_date ?? todayLocal())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const cuentasMoneda = cuentas.filter((c) => c.currency === currency)
+
+  function pickCurrency(c: Currency) {
+    setCurrency(c)
+    // Si la cuenta elegida ya no coincide con la moneda, la deseleccionamos.
+    const acc = cuentas.find((x) => x.id === accountId)
+    if (acc && acc.currency !== c) setAccountId('')
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
-
     const desc = description.trim()
     if (!desc) {
       setError('Poné una descripción (ej: "Sueldo julio" o "Saldo en banco").')
@@ -93,6 +104,7 @@ export function IncomeForm({
       setError('El monto tiene que ser un número mayor a cero.')
       return
     }
+    const acc = cuentas.find((c) => c.id === accountId) ?? null
 
     setSaving(true)
     try {
@@ -102,7 +114,8 @@ export function IncomeForm({
         currency,
         category: category || null,
         source: source || null,
-        collection_method: collection || null,
+        collection_method: acc?.name ?? null,
+        account_id: isInitial ? null : accountId || null,
         is_initial: isInitial,
         is_recurring: isInitial ? false : isRecurring,
         income_date: date,
@@ -140,39 +153,37 @@ export function IncomeForm({
             className="amount-input"
           />
           <div className="toggle">
-            <button
-              type="button"
-              className={currency === 'ARS' ? 'toggle-btn toggle-on' : 'toggle-btn'}
-              onClick={() => setCurrency('ARS')}
-            >
+            <button type="button" className={currency === 'ARS' ? 'toggle-btn toggle-on' : 'toggle-btn'} onClick={() => pickCurrency('ARS')}>
               ARS $
             </button>
-            <button
-              type="button"
-              className={currency === 'USD' ? 'toggle-btn toggle-on' : 'toggle-btn'}
-              onClick={() => setCurrency('USD')}
-            >
+            <button type="button" className={currency === 'USD' ? 'toggle-btn toggle-on' : 'toggle-btn'} onClick={() => pickCurrency('USD')}>
               USD u$s
             </button>
           </div>
         </div>
       </div>
 
-      <div className="field">
-        <span className="field-label">Medio de cobro</span>
-        <div className="chips">
-          {MEDIOS_COBRO.map((p) => (
-            <button
-              type="button"
-              key={p}
-              className={collection === p ? 'chip chip-active' : 'chip'}
-              onClick={() => setCollection(collection === p ? '' : p)}
-            >
-              {p}
-            </button>
-          ))}
+      {!isInitial && (
+        <div className="field">
+          <span className="field-label">¿A qué cuenta entra?</span>
+          {cuentasMoneda.length === 0 ? (
+            <span className="muted-inline">Creá una cuenta ({currency}) en la pestaña 💳 Cuentas.</span>
+          ) : (
+            <div className="chips">
+              {cuentasMoneda.map((c) => (
+                <button
+                  type="button"
+                  key={c.id}
+                  className={accountId === c.id ? 'chip chip-active' : 'chip'}
+                  onClick={() => setAccountId(accountId === c.id ? '' : c.id)}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {!isInitial && (
         <>
@@ -183,12 +194,7 @@ export function IncomeForm({
             ) : (
               <div className="chips">
                 {cats.map((c) => (
-                  <button
-                    type="button"
-                    key={c}
-                    className={category === c ? 'chip chip-active' : 'chip'}
-                    onClick={() => setCategory(category === c ? '' : c)}
-                  >
+                  <button type="button" key={c} className={category === c ? 'chip chip-active' : 'chip'} onClick={() => setCategory(category === c ? '' : c)}>
                     {c}
                   </button>
                 ))}
@@ -203,12 +209,7 @@ export function IncomeForm({
             ) : (
               <div className="chips">
                 {srcs.map((s) => (
-                  <button
-                    type="button"
-                    key={s}
-                    className={source === s ? 'chip chip-active' : 'chip'}
-                    onClick={() => setSource(source === s ? '' : s)}
-                  >
+                  <button type="button" key={s} className={source === s ? 'chip chip-active' : 'chip'} onClick={() => setSource(source === s ? '' : s)}>
                     {s}
                   </button>
                 ))}

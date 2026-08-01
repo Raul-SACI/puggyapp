@@ -18,6 +18,7 @@ import {
   type MovOccurrence,
   type MovOverride,
 } from '../lib/movements'
+import type { Account } from '../lib/types'
 import { ExpenseForm, type ExpenseFormValues } from './ExpenseForm'
 
 interface Props {
@@ -25,6 +26,7 @@ interface Props {
   overrides: MovOverride[]
   reload: () => Promise<void>
   categorias: string[]
+  cuentas: Account[]
   onSaved?: () => void
 }
 
@@ -39,12 +41,13 @@ function toRow(v: ExpenseFormValues) {
     currency: v.currency,
     category: v.category,
     payment_method: v.payment_method,
+    account_id: v.account_id,
     is_recurring: v.is_recurring,
     expense_date: v.date,
   }
 }
 
-export function ExpensesCalendar({ items, overrides, reload, categorias, onSaved }: Props) {
+export function ExpensesCalendar({ items, overrides, reload, categorias, cuentas, onSaved }: Props) {
   const hoy = ymd(todayLocal())
   const [view, setView] = useState({ y: hoy.y, m: hoy.m })
   const [selectedDay, setSelectedDay] = useState<number | null>(
@@ -227,6 +230,7 @@ export function ExpensesCalendar({ items, overrides, reload, categorias, onSaved
               title="Nuevo gasto"
               submitLabel="Guardar"
               categorias={categorias}
+              cuentas={cuentas}
               initial={{ date: isoDate(view.y, view.m, selectedDay) }}
               onSubmit={handleSubmit}
               onCancel={() => setFormMode(null)}
@@ -239,12 +243,13 @@ export function ExpensesCalendar({ items, overrides, reload, categorias, onSaved
               submitLabel="Guardar cambios"
               showRecurring={formMode.occ.kind === 'one'}
               categorias={categorias}
+              cuentas={cuentas}
               initial={{
                 description: formMode.occ.description,
                 amount: formMode.occ.amount,
                 currency: formMode.occ.currency,
                 category: formMode.occ.category,
-                payment_method: formMode.occ.payment_method,
+                account_id: formMode.occ.account_id,
                 is_recurring: formMode.occ.ref.is_recurring,
                 date: isoDate(view.y, view.m, formMode.occ.day),
               }}

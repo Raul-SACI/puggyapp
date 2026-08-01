@@ -18,6 +18,7 @@ export interface Occurrence {
   category: string | null
   source: string | null
   collection_method: string | null
+  account_id: string | null
 }
 
 /**
@@ -58,6 +59,7 @@ export function monthOccurrences(
           category: inc.category,
           source: inc.source,
           collection_method: inc.collection_method,
+          account_id: inc.account_id,
         })
       }
       continue
@@ -96,6 +98,7 @@ export function monthOccurrences(
       category,
       source,
       collection_method,
+      account_id: inc.account_id,
     })
   }
 

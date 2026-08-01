@@ -80,6 +80,7 @@ export function DashboardScreen() {
         currency: e.currency,
         category: e.category,
         payment_method: e.payment_method,
+        account_id: e.account_id,
         is_recurring: e.is_recurring,
         date: e.expense_date,
       })),

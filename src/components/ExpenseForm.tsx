@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { parseMoney, todayLocal, type Currency } from '../lib/format'
+import type { Account } from '../lib/types'
 
 export const MEDIOS_PAGO = [
   'Efectivo',
@@ -15,6 +16,7 @@ export interface ExpenseFormValues {
   currency: Currency
   category: string | null
   payment_method: string | null
+  account_id: string | null
   is_recurring: boolean
   date: string
 }
@@ -24,7 +26,7 @@ interface Initial {
   amount?: number
   currency?: Currency
   category?: string | null
-  payment_method?: string | null
+  account_id?: string | null
   is_recurring?: boolean
   date?: string
 }
@@ -33,6 +35,7 @@ interface Props {
   title: string
   submitLabel: string
   categorias: string[]
+  cuentas: Account[]
   initial?: Initial
   showRecurring?: boolean
   onSubmit: (values: ExpenseFormValues) => Promise<void>
@@ -48,6 +51,7 @@ export function ExpenseForm({
   title,
   submitLabel,
   categorias,
+  cuentas,
   initial,
   showRecurring = true,
   onSubmit,
@@ -61,16 +65,23 @@ export function ExpenseForm({
   )
   const [currency, setCurrency] = useState<Currency>(initial?.currency ?? 'ARS')
   const [category, setCategory] = useState<string>(initial?.category ?? '')
-  const [payment, setPayment] = useState<string>(initial?.payment_method ?? '')
+  const [accountId, setAccountId] = useState<string>(initial?.account_id ?? '')
   const [isRecurring, setIsRecurring] = useState(initial?.is_recurring ?? false)
   const [date, setDate] = useState(initial?.date ?? todayLocal())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const cuentasMoneda = cuentas.filter((c) => c.currency === currency)
+
+  function pickCurrency(c: Currency) {
+    setCurrency(c)
+    const acc = cuentas.find((x) => x.id === accountId)
+    if (acc && acc.currency !== c) setAccountId('')
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
-
     const desc = description.trim()
     if (!desc) {
       setError('Poné una descripción (ej: "Supermercado").')
@@ -81,6 +92,7 @@ export function ExpenseForm({
       setError('El monto tiene que ser un número mayor a cero.')
       return
     }
+    const acc = cuentas.find((c) => c.id === accountId) ?? null
 
     setSaving(true)
     try {
@@ -89,7 +101,8 @@ export function ExpenseForm({
         amount: monto,
         currency,
         category: category || null,
-        payment_method: payment || null,
+        payment_method: acc?.name ?? null,
+        account_id: accountId || null,
         is_recurring: isRecurring,
         date,
       })
@@ -126,22 +139,34 @@ export function ExpenseForm({
             className="amount-input"
           />
           <div className="toggle">
-            <button
-              type="button"
-              className={currency === 'ARS' ? 'toggle-btn toggle-on' : 'toggle-btn'}
-              onClick={() => setCurrency('ARS')}
-            >
+            <button type="button" className={currency === 'ARS' ? 'toggle-btn toggle-on' : 'toggle-btn'} onClick={() => pickCurrency('ARS')}>
               ARS $
             </button>
-            <button
-              type="button"
-              className={currency === 'USD' ? 'toggle-btn toggle-on' : 'toggle-btn'}
-              onClick={() => setCurrency('USD')}
-            >
+            <button type="button" className={currency === 'USD' ? 'toggle-btn toggle-on' : 'toggle-btn'} onClick={() => pickCurrency('USD')}>
               USD u$s
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="field">
+        <span className="field-label">¿Con qué cuenta lo pagás?</span>
+        {cuentasMoneda.length === 0 ? (
+          <span className="muted-inline">Creá una cuenta ({currency}) en la pestaña 💳 Cuentas.</span>
+        ) : (
+          <div className="chips">
+            {cuentasMoneda.map((c) => (
+              <button
+                type="button"
+                key={c.id}
+                className={accountId === c.id ? 'chip chip-active' : 'chip'}
+                onClick={() => setAccountId(accountId === c.id ? '' : c.id)}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="field">
@@ -151,33 +176,12 @@ export function ExpenseForm({
         ) : (
           <div className="chips">
             {cats.map((c) => (
-              <button
-                type="button"
-                key={c}
-                className={category === c ? 'chip chip-active' : 'chip'}
-                onClick={() => setCategory(category === c ? '' : c)}
-              >
+              <button type="button" key={c} className={category === c ? 'chip chip-active' : 'chip'} onClick={() => setCategory(category === c ? '' : c)}>
                 {c}
               </button>
             ))}
           </div>
         )}
-      </div>
-
-      <div className="field">
-        <span className="field-label">Medio de pago</span>
-        <div className="chips">
-          {MEDIOS_PAGO.map((p) => (
-            <button
-              type="button"
-              key={p}
-              className={payment === p ? 'chip chip-active' : 'chip'}
-              onClick={() => setPayment(payment === p ? '' : p)}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
       </div>
 
       <label className="field">

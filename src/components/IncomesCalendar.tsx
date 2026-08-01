@@ -12,7 +12,7 @@ import {
   ymd,
 } from '../lib/format'
 import { monthOccurrences, sumByCurrency, type Occurrence } from '../lib/incomes'
-import type { Income, IncomeOverride } from '../lib/types'
+import type { Account, Income, IncomeOverride } from '../lib/types'
 import { IncomeForm, type IncomeFormValues } from './IncomeForm'
 
 interface Props {
@@ -21,6 +21,7 @@ interface Props {
   reload: () => Promise<void>
   categorias: string[]
   fuentes: string[]
+  cuentas: Account[]
   onSaved?: () => void
 }
 
@@ -31,7 +32,7 @@ type FormMode =
 
 const DIAS = ['LU', 'MA', 'MI', 'JU', 'VI', 'SA', 'DO']
 
-export function IncomesCalendar({ incomes, overrides, reload, categorias, fuentes, onSaved }: Props) {
+export function IncomesCalendar({ incomes, overrides, reload, categorias, fuentes, cuentas, onSaved }: Props) {
   const hoy = ymd(todayLocal())
   const [view, setView] = useState({ y: hoy.y, m: hoy.m })
   const [selectedDay, setSelectedDay] = useState<number | null>(
@@ -230,6 +231,7 @@ export function IncomesCalendar({ incomes, overrides, reload, categorias, fuente
               showInitial={false}
               categorias={categorias}
               fuentes={fuentes}
+              cuentas={cuentas}
               initial={{ income_date: isoDate(view.y, view.m, selectedDay) }}
               onSubmit={handleSubmit}
               onCancel={() => setFormMode(null)}
@@ -244,13 +246,14 @@ export function IncomesCalendar({ incomes, overrides, reload, categorias, fuente
               showInitial={false}
               categorias={categorias}
               fuentes={fuentes}
+              cuentas={cuentas}
               initial={{
                 description: formMode.occ.description,
                 amount: formMode.occ.amount,
                 currency: formMode.occ.currency,
                 category: formMode.occ.category,
                 source: formMode.occ.source,
-                collection_method: formMode.occ.collection_method,
+                account_id: formMode.occ.account_id,
                 is_recurring: formMode.occ.income.is_recurring,
                 income_date: isoDate(view.y, view.m, formMode.occ.day),
               }}

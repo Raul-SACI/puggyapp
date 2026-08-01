@@ -189,7 +189,7 @@ export function ExpensesAnalysis({ items, overrides }: Props) {
       </div>
 
       <div className="card chart-card">
-        <h3 className="chart-title">Gastos por medio de pago ({monthName})</h3>
+        <h3 className="chart-title">Gastos por cuenta ({monthName})</h3>
         {data.payments.length === 0 ? (
           <p className="muted">No hay gastos este mes en esta moneda.</p>
         ) : (

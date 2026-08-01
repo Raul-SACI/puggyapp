@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatDateLocal, formatMoney, type Currency } from '../lib/format'
-import type { Income } from '../lib/types'
+import type { Account, Income } from '../lib/types'
 import { IncomeForm, MEDIOS_COBRO, type IncomeFormValues } from './IncomeForm'
 import { TagManager } from './TagManager'
 import { isVoiceSupported, startVoice, type VoiceRec } from '../lib/voice'
@@ -19,6 +19,7 @@ interface Props {
   onDeleteCategoria: (name: string) => Promise<void>
   onAddFuente: (name: string) => Promise<void>
   onDeleteFuente: (name: string) => Promise<void>
+  cuentas: Account[]
   onSaved?: () => void
 }
 
@@ -33,6 +34,7 @@ export function IncomesList({
   onDeleteCategoria,
   onAddFuente,
   onDeleteFuente,
+  cuentas,
   onSaved,
 }: Props) {
   const [showForm, setShowForm] = useState(false)
@@ -221,6 +223,7 @@ export function IncomesList({
             submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
             categorias={categorias}
             fuentes={fuentes}
+            cuentas={cuentas}
             initial={
               editing ??
               (voice
@@ -230,7 +233,6 @@ export function IncomesList({
                     currency: voice.currency,
                     category: voice.category,
                     source: voice.source,
-                    collection_method: voice.method,
                     is_recurring: voice.is_recurring,
                     income_date: voice.date,
                     is_initial: false,

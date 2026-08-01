@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatDateLocal, formatMoney } from '../lib/format'
 import type { MovItem } from '../lib/movements'
+import type { Account } from '../lib/types'
 import { ExpenseForm, MEDIOS_PAGO, type ExpenseFormValues } from './ExpenseForm'
 import { TagManager } from './TagManager'
 import { isVoiceSupported, startVoice, type VoiceRec } from '../lib/voice'
@@ -16,6 +17,7 @@ interface Props {
   categorias: string[]
   onAddCategoria: (name: string) => Promise<void>
   onDeleteCategoria: (name: string) => Promise<void>
+  cuentas: Account[]
   onSaved?: () => void
 }
 
@@ -26,6 +28,7 @@ function toRow(v: ExpenseFormValues) {
     currency: v.currency,
     category: v.category,
     payment_method: v.payment_method,
+    account_id: v.account_id,
     is_recurring: v.is_recurring,
     expense_date: v.date,
   }
@@ -39,6 +42,7 @@ export function ExpensesList({
   categorias,
   onAddCategoria,
   onDeleteCategoria,
+  cuentas,
   onSaved,
 }: Props) {
   const [showForm, setShowForm] = useState(false)
@@ -188,6 +192,7 @@ export function ExpensesList({
             title={voice ? 'Revisá el gasto' : editing ? 'Editar gasto' : 'Nuevo gasto'}
             submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
             categorias={categorias}
+            cuentas={cuentas}
             initial={
               editing ??
               (voice
@@ -196,7 +201,6 @@ export function ExpensesList({
                     amount: voice.amount ?? undefined,
                     currency: voice.currency,
                     category: voice.category,
-                    payment_method: voice.method,
                     is_recurring: voice.is_recurring,
                     date: voice.date,
                   }

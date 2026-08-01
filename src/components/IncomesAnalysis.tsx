@@ -376,7 +376,7 @@ export function IncomesAnalysis({ incomes, overrides, inflation, reload }: Props
 
       {/* Ingresos por medio de cobro */}
       <div className="card chart-card">
-        <h3 className="chart-title">Ingresos por medio de cobro ({monthName})</h3>
+        <h3 className="chart-title">Ingresos por cuenta ({monthName})</h3>
         {data.collections.length === 0 ? (
           <p className="muted">No hay ingresos este mes en esta moneda.</p>
         ) : (

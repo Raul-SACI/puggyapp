@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatMoney, type Currency } from '../lib/format'
-import type { Account } from '../lib/types'
+import { accountBalances } from '../lib/balances'
+import type { MovItem, MovOverride } from '../lib/movements'
+import type { Account, Expense, ExpenseOverride, Income, IncomeOverride } from '../lib/types'
 import { AccountForm, TARJETA, type AccountFormValues } from './AccountForm'
 
 function tipoIcon(type: string): string {
@@ -14,6 +16,10 @@ function tipoIcon(type: string): string {
 
 export function AccountsScreen() {
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [incomes, setIncomes] = useState<Income[]>([])
+  const [incomeOv, setIncomeOv] = useState<IncomeOverride[]>([])
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [expenseOv, setExpenseOv] = useState<ExpenseOverride[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -24,13 +30,19 @@ export function AccountsScreen() {
   const reload = useCallback(async () => {
     setLoading(true)
     setError('')
-    const { data, error } = await supabase
-      .from('accounts')
-      .select('*')
-      .order('created_at', { ascending: true })
-      .range(0, 999)
-    if (error) setError(error.message)
-    else setAccounts((data ?? []) as Account[])
+    const [acc, inc, incOv, exp, expOv] = await Promise.all([
+      supabase.from('accounts').select('*').order('created_at', { ascending: true }).range(0, 999),
+      supabase.from('incomes').select('*').range(0, 999),
+      supabase.from('income_overrides').select('*').range(0, 999),
+      supabase.from('expenses').select('*').range(0, 999),
+      supabase.from('expense_overrides').select('*').range(0, 999),
+    ])
+    if (acc.error) setError(acc.error.message)
+    else setAccounts((acc.data ?? []) as Account[])
+    setIncomes(inc.error ? [] : ((inc.data ?? []) as Income[]))
+    setIncomeOv(incOv.error ? [] : ((incOv.data ?? []) as IncomeOverride[]))
+    setExpenses(exp.error ? [] : ((exp.data ?? []) as Expense[]))
+    setExpenseOv(expOv.error ? [] : ((expOv.data ?? []) as ExpenseOverride[]))
     setLoading(false)
   }, [])
 
@@ -38,15 +50,42 @@ export function AccountsScreen() {
     void reload()
   }, [reload])
 
+  const balances = useMemo(() => {
+    const expItems: MovItem[] = expenses.map((e) => ({
+      id: e.id,
+      description: e.description,
+      amount: e.amount,
+      currency: e.currency,
+      category: e.category,
+      payment_method: e.payment_method,
+      account_id: e.account_id,
+      is_recurring: e.is_recurring,
+      date: e.expense_date,
+    }))
+    const expOverrides: MovOverride[] = expenseOv.map((o) => ({
+      ref_id: o.expense_id,
+      period: o.period,
+      status: o.status,
+      description: o.description,
+      amount: o.amount,
+      currency: o.currency,
+      category: o.category,
+      payment_method: o.payment_method,
+      override_date: o.override_date,
+    }))
+    return accountBalances(accounts, incomes, incomeOv, expItems, expOverrides)
+  }, [accounts, incomes, incomeOv, expenses, expenseOv])
+
   const totals = useMemo(() => {
     const have: Record<Currency, number> = { ARS: 0, USD: 0 }
     const owe: Record<Currency, number> = { ARS: 0, USD: 0 }
     for (const a of accounts) {
-      if (a.type === TARJETA) owe[a.currency] += a.opening_balance
-      else have[a.currency] += a.opening_balance
+      const bal = balances.get(a.id) ?? a.opening_balance
+      if (a.type === TARJETA) owe[a.currency] += bal
+      else have[a.currency] += bal
     }
     return { have, owe }
-  }, [accounts])
+  }, [accounts, balances])
 
   async function handleSubmit(values: AccountFormValues) {
     if (editing) {
@@ -138,6 +177,7 @@ export function AccountsScreen() {
 
         {accounts.map((a) => {
           const esTarjeta = a.type === TARJETA
+          const bal = balances.get(a.id) ?? a.opening_balance
           return (
             <div key={a.id} className="card item">
               <div className="item-main">
@@ -146,7 +186,7 @@ export function AccountsScreen() {
                     {tipoIcon(a.type)} {a.name}
                   </span>
                   <span className={esTarjeta ? 'item-amount rend-down' : 'item-amount rend-up'}>
-                    {formatMoney(a.opening_balance, a.currency)}
+                    {formatMoney(bal, a.currency)}
                   </span>
                 </div>
                 <div className="item-meta">
@@ -191,13 +231,6 @@ export function AccountsScreen() {
             </div>
           )
         })}
-
-        {accounts.length > 0 && (
-          <p className="muted" style={{ marginTop: '6px' }}>
-            Por ahora el saldo es el que cargaste. En el próximo paso se va a actualizar solo
-            con tus ingresos, gastos y transferencias. 🐷
-          </p>
-        )}
       </div>
     </div>
   )

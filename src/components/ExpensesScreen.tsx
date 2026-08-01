@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { DEFAULT_EXPENSE_CATEGORIES } from '../lib/defaults'
-import type { Category, Expense, ExpenseOverride } from '../lib/types'
+import type { Account, Category, Expense, ExpenseOverride } from '../lib/types'
 import type { MovItem, MovOverride } from '../lib/movements'
 import { ExpensesList } from './ExpensesList'
 import { ExpensesCalendar } from './ExpensesCalendar'
@@ -16,6 +16,7 @@ export function ExpensesScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [rawOverrides, setRawOverrides] = useState<ExpenseOverride[]>([])
   const [categorias, setCategorias] = useState<string[]>([])
+  const [cuentas, setCuentas] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [celebrate, setCelebrate] = useState(false)
@@ -23,15 +24,17 @@ export function ExpensesScreen() {
   const reload = useCallback(async () => {
     setLoading(true)
     setError('')
-    const [expRes, ovRes, catRes] = await Promise.all([
+    const [expRes, ovRes, catRes, acctRes] = await Promise.all([
       supabase.from('expenses').select('*').order('expense_date', { ascending: false }).order('created_at', { ascending: false }).range(0, 999),
       supabase.from('expense_overrides').select('*').range(0, 999),
       supabase.from('categories').select('*').eq('kind', 'expense').range(0, 999),
+      supabase.from('accounts').select('*').order('created_at').range(0, 999),
     ])
 
     if (expRes.error) setError(expRes.error.message)
     else setExpenses((expRes.data ?? []) as Expense[])
     setRawOverrides(ovRes.error ? [] : ((ovRes.data ?? []) as ExpenseOverride[]))
+    setCuentas(acctRes.error ? [] : ((acctRes.data ?? []) as Account[]))
 
     let cats = catRes.error ? [] : (catRes.data as Category[]).map((c) => c.name)
     if (!catRes.error && cats.length === 0) {
@@ -67,6 +70,7 @@ export function ExpensesScreen() {
         currency: e.currency,
         category: e.category,
         payment_method: e.payment_method,
+        account_id: e.account_id,
         is_recurring: e.is_recurring,
         date: e.expense_date,
       })),
@@ -116,6 +120,7 @@ export function ExpensesScreen() {
           categorias={categorias}
           onAddCategoria={addCategoria}
           onDeleteCategoria={deleteCategoria}
+          cuentas={cuentas}
           onSaved={() => setCelebrate(true)}
         />
       )}
@@ -125,6 +130,7 @@ export function ExpensesScreen() {
           overrides={overrides}
           reload={reload}
           categorias={categorias}
+          cuentas={cuentas}
           onSaved={() => setCelebrate(true)}
         />
       )}

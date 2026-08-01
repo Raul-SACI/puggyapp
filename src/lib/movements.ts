@@ -14,6 +14,7 @@ export interface MovItem {
   currency: Currency
   category: string | null
   payment_method: string | null
+  account_id: string | null
   is_recurring: boolean
   date: string // YYYY-MM-DD
 }
@@ -40,6 +41,7 @@ export interface MovOccurrence {
   currency: Currency
   category: string | null
   payment_method: string | null
+  account_id: string | null
 }
 
 /**
@@ -74,6 +76,7 @@ export function monthMovements(
           currency: it.currency,
           category: it.category,
           payment_method: it.payment_method,
+          account_id: it.account_id,
         })
       }
       continue
@@ -109,6 +112,7 @@ export function monthMovements(
       currency,
       category,
       payment_method,
+      account_id: it.account_id,
     })
   }
 

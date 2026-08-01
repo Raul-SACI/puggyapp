@@ -8,6 +8,7 @@ export interface Income {
   category: string | null
   source: string | null
   collection_method: string | null
+  account_id: string | null
   is_initial: boolean
   is_recurring: boolean
   income_date: string // YYYY-MM-DD
@@ -56,6 +57,7 @@ export interface Expense {
   currency: Currency
   category: string | null
   payment_method: string | null
+  account_id: string | null
   is_recurring: boolean
   expense_date: string // YYYY-MM-DD
   created_at: string
