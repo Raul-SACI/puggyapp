@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { formatMoney, formatPct, type Currency } from '../lib/format'
 import type { Investment } from '../lib/types'
 import { InvestmentForm, type InvestmentFormValues } from './InvestmentForm'
+import { CoachMark } from './CoachMark'
 
 interface Props {
   items: Investment[]
@@ -91,17 +92,23 @@ export function InvestmentsList({ items, loading, error, reload }: Props) {
       })}
 
       {!showForm && (
-        <button
-          type="button"
-          className="btn-primary btn-blue"
-          onClick={() => {
-            setEditing(null)
-            setShowForm(true)
-            setConfirmDelete(null)
-          }}
-        >
-          + Agregar inversión
-        </button>
+        <>
+          <CoachMark
+            tipKey="tip_inversiones"
+            text="Cargá tus inversiones (plazo fijo, dólares, acciones…) para seguir cuánto rinden con el tiempo."
+          />
+          <button
+            type="button"
+            className="btn-primary btn-blue"
+            onClick={() => {
+              setEditing(null)
+              setShowForm(true)
+              setConfirmDelete(null)
+            }}
+          >
+            + Agregar inversión
+          </button>
+        </>
       )}
 
       {showForm && (

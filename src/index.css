@@ -374,6 +374,69 @@ input:focus {
   color: var(--text);
 }
 
+/* ---------- Onboarding: globitos de ayuda (coach marks) ---------- */
+.coach {
+  display: block;
+  animation: celebfade 0.3s ease;
+}
+
+.coach-bubble {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff7ed;
+  border: 1.5px solid #fdba74;
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.12);
+}
+
+.coach-emoji {
+  font-size: 20px;
+  line-height: 1.2;
+  flex: none;
+}
+
+.coach-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coach-text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #7c2d12;
+}
+
+.coach-ok {
+  align-self: flex-start;
+  border: none;
+  background: #f97316;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.coach-ok:hover {
+  background: #ea580c;
+}
+
+.coach-arrow {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: -8px 0 0 30px;
+  background: #fff7ed;
+  border-right: 1.5px solid #fdba74;
+  border-bottom: 1.5px solid #fdba74;
+  border-radius: 0 0 3px 0;
+  transform: rotate(45deg);
+}
+
 .home-main {
   flex: 1;
   padding: 20px;

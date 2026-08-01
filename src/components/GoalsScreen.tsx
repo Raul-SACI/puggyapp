@@ -10,6 +10,7 @@ import {
 } from '../lib/format'
 import type { SavingsGoal } from '../lib/types'
 import { GoalForm, type GoalFormValues } from './GoalForm'
+import { CoachMark } from './CoachMark'
 
 /** Texto de ayuda: cuánto ahorrar por mes para llegar a la meta. */
 function planHint(goal: SavingsGoal): { text: string; tone: 'ok' | 'warn' | 'done' } {
@@ -117,18 +118,24 @@ export function GoalsScreen() {
   return (
     <div className="screen">
       {!showForm && (
-        <button
-          type="button"
-          className="btn-primary btn-pink"
-          onClick={() => {
-            setEditing(null)
-            setShowForm(true)
-            setConfirmDelete(null)
-            setAporteFor(null)
-          }}
-        >
-          + Nuevo objetivo
-        </button>
+        <>
+          <CoachMark
+            tipKey="tip_objetivos"
+            text="Ponete una meta de ahorro (ej: un viaje, un auto) y Puggy te muestra cómo vas y cuánto te falta."
+          />
+          <button
+            type="button"
+            className="btn-primary btn-pink"
+            onClick={() => {
+              setEditing(null)
+              setShowForm(true)
+              setConfirmDelete(null)
+              setAporteFor(null)
+            }}
+          >
+            + Nuevo objetivo
+          </button>
+        </>
       )}
 
       {showForm && (

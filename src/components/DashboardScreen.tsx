@@ -15,6 +15,7 @@ import {
 import { monthOccurrences, sumByCurrency } from '../lib/incomes'
 import { monthMovements, sumCur, type MovItem, type MovOverride } from '../lib/movements'
 import { accountBalances, TARJETA_TYPE } from '../lib/balances'
+import { CoachMark } from './CoachMark'
 import type {
   Account,
   Expense,
@@ -237,6 +238,12 @@ export function DashboardScreen() {
         <h2 className="welcome-title">¡Hola, {name}! 👋</h2>
         <p className="welcome-hint">Tu panorama financiero de un vistazo.</p>
       </div>
+
+      <CoachMark
+        tipKey="tip_dashboard"
+        arrow="none"
+        text="Este es tu resumen: tu patrimonio (lo que tenés menos lo que debés), el balance del mes y a dónde se va la plata. Cambiá entre Mes/Año y Pesos/Dólares con los botones de abajo."
+      />
 
       <div className="subtabs">
         <button type="button" className={mode === 'mes' ? 'subtab subtab-on' : 'subtab'} onClick={() => setMode('mes')}>

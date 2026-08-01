@@ -13,6 +13,7 @@ import type {
 } from '../lib/types'
 import { AccountForm, TARJETA, type AccountFormValues } from './AccountForm'
 import { TransferForm, type TransferFormValues } from './TransferForm'
+import { CoachMark } from './CoachMark'
 
 function tipoIcon(type: string): string {
   if (type === 'Efectivo') return '💵'
@@ -171,6 +172,11 @@ export function AccountsScreen() {
       ))}
 
       {mode === 'none' && (
+        <>
+        <CoachMark
+          tipKey="tip_cuentas"
+          text="Empezá por acá: cargá tu efectivo, banco, billetera o tarjeta. Es la base para que los números cierren."
+        />
         <div className="btn-pair">
           <button
             type="button"
@@ -194,6 +200,7 @@ export function AccountsScreen() {
             ↔ Transferir
           </button>
         </div>
+        </>
       )}
 
       {mode === 'account' && (

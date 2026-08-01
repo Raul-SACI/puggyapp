@@ -5,6 +5,7 @@ import type { MovItem } from '../lib/movements'
 import type { Account } from '../lib/types'
 import { ExpenseForm, MEDIOS_PAGO, type ExpenseFormValues } from './ExpenseForm'
 import { TagManager } from './TagManager'
+import { CoachMark } from './CoachMark'
 import { isVoiceSupported, startVoice, type VoiceRec } from '../lib/voice'
 import { parseVoice, type ParsedVoice } from '../lib/voiceParse'
 import { VoiceListening } from './VoiceListening'
@@ -144,6 +145,10 @@ export function ExpensesList({
 
       {!showForm && (
         <>
+          <CoachMark
+            tipKey="tip_gastos"
+            text="Anotá lo que gastás y con qué cuenta pagaste. Si pagás con tarjeta, se suma solo a la deuda de esa tarjeta."
+          />
           <button
             type="button"
             className="btn-primary btn-red"

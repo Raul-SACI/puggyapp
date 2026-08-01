@@ -4,6 +4,7 @@ import { formatDateLocal, formatMoney, type Currency } from '../lib/format'
 import type { Account, Income } from '../lib/types'
 import { IncomeForm, MEDIOS_COBRO, type IncomeFormValues } from './IncomeForm'
 import { TagManager } from './TagManager'
+import { CoachMark } from './CoachMark'
 import { isVoiceSupported, startVoice, type VoiceRec } from '../lib/voice'
 import { parseVoice, type ParsedVoice } from '../lib/voiceParse'
 import { VoiceListening } from './VoiceListening'
@@ -167,6 +168,10 @@ export function IncomesList({
 
       {!showForm && (
         <>
+          <CoachMark
+            tipKey="tip_ingresos"
+            text="Anotá la plata que entra (sueldo, alquiler, ventas…). Lo que se repite todos los meses, marcalo como mensual."
+          />
           <button type="button" className="btn-primary" onClick={() => openNew(false)}>
             + Agregar ingreso
           </button>
