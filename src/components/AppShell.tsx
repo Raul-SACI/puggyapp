@@ -6,8 +6,9 @@ import { IncomesScreen } from './IncomesScreen'
 import { ExpensesScreen } from './ExpensesScreen'
 import { InvestmentsScreen } from './InvestmentsScreen'
 import { GoalsScreen } from './GoalsScreen'
+import { AccountsScreen } from './AccountsScreen'
 
-type Tab = 'dashboard' | 'ingresos' | 'gastos' | 'inversiones' | 'objetivos'
+type Tab = 'dashboard' | 'ingresos' | 'gastos' | 'cuentas' | 'inversiones' | 'objetivos'
 
 export function AppShell() {
   const { signOut } = useAuth()
@@ -31,6 +32,7 @@ export function AppShell() {
         {tab === 'dashboard' && <DashboardScreen />}
         {tab === 'ingresos' && <IncomesScreen />}
         {tab === 'gastos' && <ExpensesScreen />}
+        {tab === 'cuentas' && <AccountsScreen />}
         {tab === 'inversiones' && <InvestmentsScreen />}
         {tab === 'objetivos' && <GoalsScreen />}
       </main>
@@ -59,6 +61,14 @@ export function AppShell() {
         >
           <span className="nav-ico">🧾</span>
           Gastos
+        </button>
+        <button
+          type="button"
+          className={tab === 'cuentas' ? 'nav-item nav-active' : 'nav-item'}
+          onClick={() => setTab('cuentas')}
+        >
+          <span className="nav-ico">💳</span>
+          Cuentas
         </button>
         <button
           type="button"

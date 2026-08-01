@@ -87,6 +87,15 @@ export interface Investment {
   created_at: string
 }
 
+export interface Account {
+  id: string
+  name: string
+  type: string
+  currency: Currency
+  opening_balance: number
+  created_at: string
+}
+
 export interface Reminder {
   id: string
   kind: 'cobro' | 'pago'
