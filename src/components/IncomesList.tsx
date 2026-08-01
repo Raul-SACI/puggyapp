@@ -167,14 +167,9 @@ export function IncomesList({
 
       {!showForm && (
         <>
-          <div className="btn-pair">
-            <button type="button" className="btn-primary" onClick={() => openNew(false)}>
-              + Agregar ingreso
-            </button>
-            <button type="button" className="btn-secondary" onClick={() => openNew(true)}>
-              + Saldo inicial
-            </button>
-          </div>
+          <button type="button" className="btn-primary" onClick={() => openNew(false)}>
+            + Agregar ingreso
+          </button>
 
           <button
             type="button"
@@ -259,8 +254,8 @@ export function IncomesList({
 
         {!loading && !error && incomes.length === 0 && (
           <p className="muted">
-            Todavía no cargaste nada. Tocá “+ Agregar ingreso”, o “+ Saldo inicial” para
-            registrar lo que ya tenés hoy.
+            Todavía no cargaste nada. Tocá “+ Agregar ingreso” para registrar tu primer
+            ingreso.
           </p>
         )}
 
