@@ -42,14 +42,20 @@ export function TagManager({ title, items, onAdd, onDelete }: Props) {
         ))}
         {items.length === 0 && <span className="muted-inline">No hay todavía.</span>}
       </div>
-      <div className="amount-row">
+      <div className="manage-add">
         <input
-          className="amount-input"
+          className="manage-add-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Agregar nueva…"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              void add()
+            }
+          }}
+          placeholder="Escribí y tocá Agregar…"
         />
-        <button type="button" className="btn-secondary btn-small" disabled={busy} onClick={add}>
+        <button type="button" className="btn-secondary manage-add-btn" disabled={busy} onClick={add}>
           Agregar
         </button>
       </div>

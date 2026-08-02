@@ -1305,6 +1305,24 @@ input:focus {
   gap: 6px;
 }
 
+.manage-add {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.manage-add-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.manage-add-btn {
+  width: auto;
+  flex: 0 0 auto;
+  margin-top: 0;
+  padding: 12px 18px;
+}
+
 .chip-x {
   border: none;
   background: transparent;
