@@ -84,6 +84,7 @@ export interface Investment {
   amount_invested: number
   current_value: number | null
   currency: Currency
+  account_id: string | null
   invested_at: string // YYYY-MM-DD
   notes: string | null
   created_at: string

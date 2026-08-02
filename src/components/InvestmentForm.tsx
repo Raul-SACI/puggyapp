@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { parseMoney, todayLocal, type Currency } from '../lib/format'
+import type { Account } from '../lib/types'
+import { PRESTAMO_ACTIVO, isDebtType } from '../lib/balances'
 
 export const TIPOS_INVERSION = [
   'Plazo fijo',
@@ -17,6 +19,7 @@ export interface InvestmentFormValues {
   amount_invested: number
   current_value: number | null
   currency: Currency
+  account_id: string | null
   invested_at: string
   notes: string | null
 }
@@ -27,6 +30,7 @@ interface Initial {
   amount_invested?: number
   current_value?: number | null
   currency?: Currency
+  account_id?: string | null
   invested_at?: string
   notes?: string | null
 }
@@ -35,11 +39,12 @@ interface Props {
   title: string
   submitLabel: string
   initial?: Initial
+  cuentas: Account[]
   onSubmit: (values: InvestmentFormValues) => Promise<void>
   onCancel: () => void
 }
 
-export function InvestmentForm({ title, submitLabel, initial, onSubmit, onCancel }: Props) {
+export function InvestmentForm({ title, submitLabel, initial, cuentas, onSubmit, onCancel }: Props) {
   const initType = initial?.type ?? ''
   const presetMatch = TIPOS_INVERSION.includes(initType)
 
@@ -53,10 +58,22 @@ export function InvestmentForm({ title, submitLabel, initial, onSubmit, onCancel
     initial?.current_value != null ? String(initial.current_value).replace('.', ',') : '',
   )
   const [currency, setCurrency] = useState<Currency>(initial?.currency ?? 'ARS')
+  const [accountId, setAccountId] = useState<string>(initial?.account_id ?? '')
   const [date, setDate] = useState(initial?.invested_at ?? todayLocal())
   const [notes, setNotes] = useState(initial?.notes ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // Cuentas desde donde puede salir la plata: líquidas y de la misma moneda.
+  const cuentasOrigen = cuentas.filter(
+    (c) => c.currency === currency && !isDebtType(c.type) && c.type !== PRESTAMO_ACTIVO,
+  )
+
+  // Si cambia la moneda y la cuenta elegida ya no coincide, la deseleccionamos.
+  useEffect(() => {
+    const acc = cuentas.find((x) => x.id === accountId)
+    if (acc && acc.currency !== currency) setAccountId('')
+  }, [currency, accountId, cuentas])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -70,6 +87,10 @@ export function InvestmentForm({ title, submitLabel, initial, onSubmit, onCancel
     const inv = parseMoney(invested)
     if (inv === null || inv <= 0) {
       setError('El monto invertido tiene que ser un número mayor a cero.')
+      return
+    }
+    if (!accountId) {
+      setError('Elegí de qué cuenta salió la plata para invertir.')
       return
     }
     let cur: number | null = null
@@ -90,6 +111,7 @@ export function InvestmentForm({ title, submitLabel, initial, onSubmit, onCancel
         amount_invested: inv,
         current_value: cur,
         currency,
+        account_id: accountId || null,
         invested_at: date,
         notes: notes.trim() || null,
       })
@@ -167,6 +189,29 @@ export function InvestmentForm({ title, submitLabel, initial, onSubmit, onCancel
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="field">
+        <span className="field-label">¿De qué cuenta salió la plata?</span>
+        {cuentasOrigen.length === 0 ? (
+          <span className="muted-inline">
+            Creá una cuenta ({currency}) en la pestaña 💳 Cuentas para poder invertir.
+          </span>
+        ) : (
+          <div className="chips">
+            {cuentasOrigen.map((c) => (
+              <button
+                type="button"
+                key={c.id}
+                className={accountId === c.id ? 'chip chip-active' : 'chip'}
+                onClick={() => setAccountId(accountId === c.id ? '' : c.id)}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+        <span className="muted-inline">Esa cuenta va a bajar su saldo por el monto invertido.</span>
       </div>
 
       <label className="field">

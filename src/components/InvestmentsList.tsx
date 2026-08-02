@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatMoney, formatPct, type Currency } from '../lib/format'
-import type { Investment } from '../lib/types'
+import type { Account, Investment } from '../lib/types'
 import { InvestmentForm, type InvestmentFormValues } from './InvestmentForm'
 import { CoachMark } from './CoachMark'
 
@@ -10,6 +10,7 @@ interface Props {
   loading: boolean
   error: string
   reload: () => Promise<void>
+  cuentas: Account[]
 }
 
 interface Summary {
@@ -17,7 +18,7 @@ interface Summary {
   actual: number
 }
 
-export function InvestmentsList({ items, loading, error, reload }: Props) {
+export function InvestmentsList({ items, loading, error, reload, cuentas }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Investment | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -61,6 +62,9 @@ export function InvestmentsList({ items, loading, error, reload }: Props) {
   const currencies: Currency[] = (['ARS', 'USD'] as Currency[]).filter(
     (c) => summaries[c].invertido > 0,
   )
+
+  const accName = (id: string | null) =>
+    id ? (cuentas.find((c) => c.id === id)?.name ?? null) : null
 
   return (
     <div className="screen">
@@ -116,6 +120,7 @@ export function InvestmentsList({ items, loading, error, reload }: Props) {
           title={editing ? 'Editar inversión' : 'Nueva inversión'}
           submitLabel={editing ? 'Guardar cambios' : 'Guardar'}
           initial={editing ?? undefined}
+          cuentas={cuentas}
           onSubmit={handleSubmit}
           onCancel={() => {
             setShowForm(false)
@@ -151,6 +156,9 @@ export function InvestmentsList({ items, loading, error, reload }: Props) {
                 </div>
                 <div className="item-meta">
                   {inv.type && <span className="tag">{inv.type}</span>}
+                  {accName(inv.account_id) && (
+                    <span className="tag tag-pay">💳 {accName(inv.account_id)}</span>
+                  )}
                   {hasCurrent ? (
                     <span className={rend >= 0 ? 'tag rend-tag-up' : 'tag rend-tag-down'}>
                       {formatPct(pct)} ({formatMoney(rend, inv.currency)})

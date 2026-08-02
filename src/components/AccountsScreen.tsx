@@ -15,6 +15,7 @@ import type {
   ExpenseOverride,
   Income,
   IncomeOverride,
+  Investment,
   Transfer,
 } from '../lib/types'
 import { AccountForm, type AccountFormValues } from './AccountForm'
@@ -40,6 +41,7 @@ export function AccountsScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [expenseOv, setExpenseOv] = useState<ExpenseOverride[]>([])
   const [transfers, setTransfers] = useState<Transfer[]>([])
+  const [investments, setInvestments] = useState<Investment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -53,13 +55,14 @@ export function AccountsScreen() {
   const reload = useCallback(async () => {
     setLoading(true)
     setError('')
-    const [acc, inc, incOv, exp, expOv, tr] = await Promise.all([
+    const [acc, inc, incOv, exp, expOv, tr, invs] = await Promise.all([
       supabase.from('accounts').select('*').order('created_at', { ascending: true }).range(0, 999),
       supabase.from('incomes').select('*').range(0, 999),
       supabase.from('income_overrides').select('*').range(0, 999),
       supabase.from('expenses').select('*').range(0, 999),
       supabase.from('expense_overrides').select('*').range(0, 999),
       supabase.from('transfers').select('*').order('transfer_date', { ascending: false }).range(0, 999),
+      supabase.from('investments').select('*').range(0, 999),
     ])
     if (acc.error) setError(acc.error.message)
     else setAccounts((acc.data ?? []) as Account[])
@@ -68,6 +71,7 @@ export function AccountsScreen() {
     setExpenses(exp.error ? [] : ((exp.data ?? []) as Expense[]))
     setExpenseOv(expOv.error ? [] : ((expOv.data ?? []) as ExpenseOverride[]))
     setTransfers(tr.error ? [] : ((tr.data ?? []) as Transfer[]))
+    setInvestments(invs.error ? [] : ((invs.data ?? []) as Investment[]))
     setLoading(false)
   }, [])
 
@@ -98,8 +102,8 @@ export function AccountsScreen() {
       payment_method: o.payment_method,
       override_date: o.override_date,
     }))
-    return accountBalances(accounts, incomes, incomeOv, expItems, expOverrides, transfers)
-  }, [accounts, incomes, incomeOv, expenses, expenseOv, transfers])
+    return accountBalances(accounts, incomes, incomeOv, expItems, expOverrides, transfers, investments)
+  }, [accounts, incomes, incomeOv, expenses, expenseOv, transfers, investments])
 
   const totals = useMemo(() => {
     const have: Record<Currency, number> = { ARS: 0, USD: 0 }

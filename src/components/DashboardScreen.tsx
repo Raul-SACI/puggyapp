@@ -124,8 +124,8 @@ export function DashboardScreen() {
 
   // -------- Patrimonio (foto de HOY, según la moneda elegida) --------
   const balances = useMemo(
-    () => accountBalances(accounts, incomes, incomeOv, expItems, expOverrides, transfers),
-    [accounts, incomes, incomeOv, expItems, expOverrides, transfers],
+    () => accountBalances(accounts, incomes, incomeOv, expItems, expOverrides, transfers, investments),
+    [accounts, incomes, incomeOv, expItems, expOverrides, transfers, investments],
   )
   const patrimonio = useMemo(() => {
     let activos = 0
@@ -139,8 +139,20 @@ export function DashboardScreen() {
       else activos += bal
       cuentas.push({ id: a.id, name: a.name, type: a.type, bal, esDeuda })
     }
-    return { activos, deudas, neto: activos - deudas, cuentas, has: cuentas.length > 0 }
-  }, [accounts, balances, currency])
+    let inversiones = 0
+    for (const i of investments) {
+      if (i.currency !== currency) continue
+      inversiones += i.current_value ?? i.amount_invested
+    }
+    return {
+      activos,
+      inversiones,
+      deudas,
+      neto: activos + inversiones - deudas,
+      cuentas,
+      has: cuentas.length > 0 || inversiones > 0,
+    }
+  }, [accounts, balances, currency, investments])
 
   // -------- Vista mensual --------
   const mData = useMemo(() => {
@@ -288,9 +300,15 @@ export function DashboardScreen() {
               </span>
               <div className="inv-rows">
                 <div className="inv-row">
-                  <span>Tenés (activos)</span>
+                  <span>Tenés en cuentas</span>
                   <span className="inv-val rend-up">{formatMoney(patrimonio.activos, currency)}</span>
                 </div>
+                {patrimonio.inversiones > 0 && (
+                  <div className="inv-row">
+                    <span>En inversiones</span>
+                    <span className="inv-val rend-up">{formatMoney(patrimonio.inversiones, currency)}</span>
+                  </div>
+                )}
                 {patrimonio.deudas > 0 && (
                   <div className="inv-row">
                     <span>Debés (tarjetas y préstamos)</span>
@@ -298,7 +316,7 @@ export function DashboardScreen() {
                   </div>
                 )}
               </div>
-              <span className="muted">Activos menos deudas de tarjeta, al día de hoy.</span>
+              <span className="muted">Cuentas más inversiones, menos deudas, al día de hoy.</span>
             </div>
 
             <div className="card chart-card">
