@@ -105,6 +105,10 @@ export interface Transfer {
   to_account: string
   amount: number
   currency: Currency
+  // Cambio de moneda (compra/venta de dólares): si están cargados, el destino
+  // recibe 'to_amount' en 'to_currency'. En una transferencia normal quedan null.
+  to_amount: number | null
+  to_currency: Currency | null
   transfer_date: string // YYYY-MM-DD
   notes: string | null
   created_at: string

@@ -58,10 +58,14 @@ export function accountBalances(
   }
 
   // Transferencias: sale de una cuenta, entra en otra (hasta hoy).
+  // En un cambio de moneda, de la cuenta origen sale 'amount' (su moneda) y en
+  // la cuenta destino entra 'to_amount' (la otra moneda). Cada cuenta acumula
+  // en su propia moneda, así que no se mezclan pesos con dólares.
   for (const t of transfers) {
     if (t.transfer_date > today) continue
+    const entra = t.to_amount ?? t.amount
     net.set(t.from_account, (net.get(t.from_account) ?? 0) - t.amount)
-    net.set(t.to_account, (net.get(t.to_account) ?? 0) + t.amount)
+    net.set(t.to_account, (net.get(t.to_account) ?? 0) + entra)
   }
 
   // Inversiones: la plata invertida sale de la cuenta de origen (hasta hoy).

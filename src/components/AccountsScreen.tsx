@@ -332,18 +332,25 @@ export function AccountsScreen() {
             const destinoTipo = accounts.find((a) => a.id === t.to_account)?.type ?? ''
             const esPago = isDebtType(destinoTipo)
             const pagoLabel = destinoTipo === TARJETA_TYPE ? 'Pago de tarjeta' : 'Pago de préstamo'
+            const esCambio = t.to_amount != null && t.to_currency != null
             return (
               <div key={t.id} className="card item">
                 <div className="item-main">
                   <div className="item-top">
                     <span className="item-desc">
+                      {esCambio ? '💱 ' : ''}
                       {accName(t.from_account)} → {esPago ? `${tipoIcon(destinoTipo)} ` : ''}
                       {accName(t.to_account)}
                     </span>
-                    <span className="item-amount">{formatMoney(t.amount, t.currency)}</span>
+                    <span className="item-amount">
+                      {esCambio
+                        ? `${formatMoney(t.amount, t.currency)} → ${formatMoney(t.to_amount as number, t.to_currency as Currency)}`
+                        : formatMoney(t.amount, t.currency)}
+                    </span>
                   </div>
                   <div className="item-meta">
                     {esPago && <span className="tag tag-recur">{pagoLabel}</span>}
+                    {esCambio && <span className="tag tag-pay">Cambio de moneda</span>}
                     <span className="item-date">{formatDateLocal(t.transfer_date)}</span>
                     {t.notes && <span className="muted-inline">· {t.notes}</span>}
                   </div>
